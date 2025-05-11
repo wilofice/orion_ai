@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "242901186197",
+    "project_id": "sample-firebase-ai-app-c7883",
+    "storage_bucket": "sample-firebase-ai-app-c7883.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:242901186197:android:d3e543b5d7c2d33b178d9c",
+        "android_client_info": {
+          "package_name": "com.example.orion_ai"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "242901186197-4l0v45e9uibs55eb0ei6bf4ifbobm0rk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC_kprcjzhYn1wVDFrAbjkTPTa-k2TI_Jk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "242901186197-4l0v45e9uibs55eb0ei6bf4ifbobm0rk.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "242901186197-s5evveidj4elpe7eu5vcg2p904cd8sei.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.orion.app"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:242901186197:android:8292fb3041e441eb178d9c",
+        "android_client_info": {
+          "package_name": "com.orion.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "242901186197-4l0v45e9uibs55eb0ei6bf4ifbobm0rk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC_kprcjzhYn1wVDFrAbjkTPTa-k2TI_Jk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "242901186197-4l0v45e9uibs55eb0ei6bf4ifbobm0rk.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "242901186197-s5evveidj4elpe7eu5vcg2p904cd8sei.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.orion.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
