@@ -38,11 +38,11 @@ dependencies:
   # flutter_riverpod: ^2.4.0
 
   # Firebase Core & Auth
-  #firebase_core: ^2.24.0
-  #firebase_auth: ^4.16.0
+  firebase_core: ^2.24.0
+  firebase_auth: ^4.16.0
 
   # Google Sign-In
-  google_sign_in: ^6.3.0
+  #google_sign_in: ^6.3.0
 
   # Firebase Analytics
   #firebase_analytics: ^10.8.0
