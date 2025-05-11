@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "242901186197-b59i14n5oodp6e54t5iptcl1j1d91ql8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.orion_ai",
+            "certificate_hash": "ea2bb9746d7cb007628dc454a94b62c7355b8dc1"
+          }
+        },
+        {
           "client_id": "242901186197-4l0v45e9uibs55eb0ei6bf4ifbobm0rk.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -31,10 +39,10 @@
               "client_type": 3
             },
             {
-              "client_id": "242901186197-s5evveidj4elpe7eu5vcg2p904cd8sei.apps.googleusercontent.com",
+              "client_id": "242901186197-k0kflho05ctojg9da4vuvf88fe7c6d1b.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.orion.app"
+                "bundle_id": "com.example.orionAi"
               }
             }
           ]
@@ -67,10 +75,10 @@
               "client_type": 3
             },
             {
-              "client_id": "242901186197-s5evveidj4elpe7eu5vcg2p904cd8sei.apps.googleusercontent.com",
+              "client_id": "242901186197-k0kflho05ctojg9da4vuvf88fe7c6d1b.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.orion.app"
+                "bundle_id": "com.example.orionAi"
               }
             }
           ]
