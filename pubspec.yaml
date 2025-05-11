@@ -43,7 +43,7 @@ dependencies:
 
   # Google Sign-In
   google_sign_in: ^6.3.0
-
+  go_router: ^15.1.2
   # Firebase Analytics
   #firebase_analytics: ^10.8.0
 
@@ -85,6 +85,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
+  provider: any
 dev_dependencies:
   flutter_test:
     sdk: flutter
