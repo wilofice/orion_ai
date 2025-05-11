@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 // Import your AuthProvider
 import 'src/auth/auth_provider.dart'; // Adjust path as needed
+import 'src/navigation/app_router.dart';
 // Import your RootNavigator or initial app widget
 // import 'package:orion_app/src/navigation/root_navigator.dart'; // Example
 
