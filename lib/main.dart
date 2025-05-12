@@ -14,31 +14,56 @@ import 'firebase_options.dart'; // Ensure this file exists and is configured
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
   runApp(const OrionApp());
 }
 
-class OrionApp extends StatelessWidget {
+class OrionApp extends StatefulWidget {
   const OrionApp({super.key});
 
   @override
+  State<OrionApp> createState() => _OrionAppState();
+}
+
+class _OrionAppState extends State<OrionApp> {
+  late final AuthProvider _authProvider;
+  late final AppRouter _appRouter;
+
+  @override
+  void initState() {
+    super.initState();
+    _authProvider = AuthProvider();
+    _appRouter = AppRouter(authProvider: _authProvider);
+  }
+
+  @override
+  void dispose() {
+    _authProvider.dispose(); // Dispose the AuthProvider
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Provide AuthProvider at the top of your widget tree
-    return ChangeNotifierProvider<AuthProvider>(
-      create: (_) => AuthProvider(),
-      child: MaterialApp(
-        title: 'Orion Calendar Assistant',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
-        ),
-        // Your RootNavigator will consume AuthProvider to decide
-        // whether to show LoginScreen or MainApp screens.
-        // home: RootNavigator(), // Example
-        home: const AuthGate(), // Placeholder for navigation logic
+    // Provide AuthProvider at the top
+    return ChangeNotifierProvider<AuthProvider>.value(
+      value: _authProvider, // Use .value constructor for existing instance
+      child: Builder( // Use Builder to get context with AuthProvider
+          builder: (context) {
+            // Access router here after AuthProvider is in context for redirect logic
+            final router = _appRouter.router;
+            return MaterialApp.router(
+              title: 'Orion Calendar Assistant',
+              theme: ThemeData(
+                primarySwatch: Colors.blue,
+                visualDensity: VisualDensity.adaptivePlatformDensity,
+                useMaterial3: true,
+              ),
+              routerConfig: router, // Use routerConfig for GoRouter
+              debugShowCheckedModeBanner: false,
+            );
+          }
       ),
     );
   }
