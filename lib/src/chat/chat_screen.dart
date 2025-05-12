@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../ui/widgets/chat_message_bubble.dart'; // Adjust path
 import '../ui/widgets/message_input_bar.dart'; // Adjust path
-// import 'package:provider/provider.dart'; // For later integration with ChatManager/AuthProvider
-// import 'package:orion_app/src/auth/auth_provider.dart'; // For user ID
+import 'package:provider/provider.dart'; // For later integration with ChatManager/AuthProvider
+import '/src/auth/auth_provider.dart'; // For user ID
 
 // Using the ChatMessage model from chat_message_bubble.dart for now
 // In a larger app, this would be in a shared models directory.

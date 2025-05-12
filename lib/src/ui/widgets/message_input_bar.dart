@@ -49,13 +49,13 @@ class MessageInputBar extends StatelessWidget {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
               ),
               enabled: !isSending,
-              onSubmitted: (_) => onSendPressed(), // Allow sending with keyboard action
+              onSubmitted: (_) => onSendPressed(), // Allow sending with keyboard action,
             ),
           ),
           const SizedBox(width: 8.0),
           IconButton(
             icon: Icon(Icons.send, color: Theme.of(context).colorScheme.primary),
-            onPressed: (isSending || controller.text.trim().isEmpty) ? null : onSendPressed,
+            onPressed: (isSending) ? null : onSendPressed,
           ),
         ],
       ),

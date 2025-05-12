@@ -6,6 +6,8 @@ import 'package:provider/provider.dart';
 // Import your AuthProvider
 import 'src/auth/auth_provider.dart'; // Adjust path as needed
 import 'src/navigation/app_router.dart';
+import 'src/services/chat_service.dart'; // Import ChatService
+import 'src/chat/chat_provider.dart'; // Import ChatProvider
 // Import your RootNavigator or initial app widget
 // import 'package:orion_app/src/navigation/root_navigator.dart'; // Example
 
@@ -30,6 +32,7 @@ class OrionApp extends StatefulWidget {
 class _OrionAppState extends State<OrionApp> {
   late final AuthProvider _authProvider;
   late final AppRouter _appRouter;
+  late final ChatService _chatService;
 
   @override
   void initState() {
@@ -46,12 +49,26 @@ class _OrionAppState extends State<OrionApp> {
 
   @override
   Widget build(BuildContext context) {
-    // Provide AuthProvider at the top
-    return ChangeNotifierProvider<AuthProvider>.value(
-      value: _authProvider, // Use .value constructor for existing instance
-      child: Builder( // Use Builder to get context with AuthProvider
+    return MultiProvider( // Use MultiProvider for multiple providers
+      providers: [
+        ChangeNotifierProvider<AuthProvider>.value(value: _authProvider),
+        // Provide ChatProvider, it needs ChatService
+        // Option 1: If ChatProvider takes ChatService in constructor
+        ChangeNotifierProvider<ChatProvider>(
+          create: (_) => ChatProvider(chatService: _chatService /*, authProvider: _authProvider (if needed)*/),
+        ),
+        // Option 2: Using ProxyProvider if ChatProvider needs AuthProvider updates
+        // ChangeNotifierProxyProvider<AuthProvider, ChatProvider>(
+        //   create: (context) => ChatProvider(
+        //     chatService: _chatService,
+        //     authProvider: Provider.of<AuthProvider>(context, listen: false),
+        //   ),
+        //   update: (context, auth, previousChatProvider) =>
+        //       previousChatProvider!..updateAuthProvider(auth), // Requires updateAuthProvider method
+        // ),
+      ],
+      child: Builder(
           builder: (context) {
-            // Access router here after AuthProvider is in context for redirect logic
             final router = _appRouter.router;
             return MaterialApp.router(
               title: 'Orion Calendar Assistant',
@@ -60,7 +77,7 @@ class _OrionAppState extends State<OrionApp> {
                 visualDensity: VisualDensity.adaptivePlatformDensity,
                 useMaterial3: true,
               ),
-              routerConfig: router, // Use routerConfig for GoRouter
+              routerConfig: router,
               debugShowCheckedModeBanner: false,
             );
           }
