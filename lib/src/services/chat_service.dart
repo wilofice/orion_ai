@@ -6,10 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 // --- Configuration ---
 // Replace with your actual backend API URL
 // Use environment variables or a config file in a real application
-const String _apiBaseUrl = kDebugMode
-    ? 'http://10.0.2.2:8000' // Android emulator localhost
-// ? 'http://localhost:8000' // iOS simulator or web localhost
-    : 'https://your-production-api.com'; // Replace with your production URL
+const String _apiBaseUrl = 'https://ww62jfo5jh.execute-api.eu-north-1.amazonaws.com/Prod'; // Replace with your production URL
 
 const String _chatEndpoint = '$_apiBaseUrl/v1/chat/prompt';
 
@@ -168,9 +165,11 @@ class ChatService {
           errorCode: 'TOKEN_FETCH_FAILED');
     }
 
+    var user_auth = 'user_from_apple';
     // 2. Prepare the full request body
     final requestData = ChatRequestData(
-      userId: currentUser.uid,
+      //userId: currentUser.uid,
+      userId: user_auth,
       promptText: promptText,
       sessionId: sessionId,
       clientContext: clientContext,
@@ -184,7 +183,8 @@ class ChatService {
         Uri.parse(_chatEndpoint),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $idToken',
+          'Authorization': 'Bearer apple',
+          'Accept': 'application/json'
         },
         body: jsonEncode(requestData.toJson()),
       );

@@ -39,6 +39,7 @@ class _OrionAppState extends State<OrionApp> {
     super.initState();
     _authProvider = AuthProvider();
     _appRouter = AppRouter(authProvider: _authProvider);
+    _chatService = ChatService();
   }
 
   @override
