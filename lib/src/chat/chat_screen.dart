@@ -19,35 +19,38 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  // Local state to track if an error SnackBar is currently shown
-  // to prevent showing multiple snackbars for the same error.
   bool _isErrorSnackbarShown = false;
 
 
   @override
   void initState() {
     super.initState();
-    // Listen to messages to scroll down
-    // Using WidgetsBinding to ensure provider is available after first frame
+    // Initial scroll if there are messages (e.g., welcome message from ChatProvider)
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Access provider once here if needed for initial setup
-      // final chatProvider = Provider.of<ChatProvider>(context, listen: false);
-      // Example: if you need to load initial messages or something
-      // chatProvider.loadInitialMessages(); // Hypothetical method
-      _scrollToBottom(); // Initial scroll if there are messages (e.g., welcome message)
+      _scrollToBottom(animate: false);
     });
   }
 
   void _scrollToBottom({bool animate = true}) {
-    if (_scrollController.hasClients) {
-      // Delay slightly to allow list to render before scrolling
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (_scrollController.hasClients) {
+    // Ensure controller is attached and there's content to scroll.
+    if (_scrollController.hasClients && _scrollController.position.maxScrollExtent > 0.0) {
+      // Delay slightly to allow list to render before scrolling, especially on new messages.
+      Future.delayed(const Duration(milliseconds: 50), () {
+        if (_scrollController.hasClients) { // Check again in case widget disposed
           _scrollController.animateTo(
-            0.0, // For reversed list, 0.0 is the bottom (most recent)
-            duration: Duration(milliseconds: animate ? 300 : 0),
+            // For a reversed list, scrolling to 0.0 scrolls to the "end"
+            // which is visually the bottom (where new messages appear).
+            _scrollController.position.minScrollExtent, // This is 0.0 for a reversed list's bottom
+            duration: Duration(milliseconds: animate ? 300 : 1), // Faster if not animated
             curve: Curves.easeOut,
           );
+        }
+      });
+    } else if (_scrollController.hasClients && _scrollController.position.maxScrollExtent == 0.0) {
+      // If maxScrollExtent is 0, it means content fits, but still ensure it's at the "bottom" (offset 0 for reversed)
+      Future.delayed(const Duration(milliseconds: 50), () {
+        if (_scrollController.hasClients) {
+          _scrollController.jumpTo(0.0);
         }
       });
     }
@@ -59,7 +62,6 @@ class _ChatScreenState extends State<ChatScreen> {
       return;
     }
 
-    // Get providers without listening for this specific action
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final chatProvider = Provider.of<ChatProvider>(context, listen: false);
 
@@ -79,12 +81,11 @@ class _ChatScreenState extends State<ChatScreen> {
     _isErrorSnackbarShown = false; // Reset snackbar flag
 
     // Call ChatProvider to handle sending the message
-    // The userId is passed to the provider method
     chatProvider.sendUserMessage(text, authProvider.currentUser!.uid);
 
     _textController.clear();
     FocusScope.of(context).unfocus(); // Dismiss keyboard
-    // _scrollToBottom(); // Scroll will be triggered by message list update
+    // Scrolling will be triggered by the list update in the build method's postFrameCallback
   }
 
   @override
@@ -96,22 +97,21 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Use context.watch to listen for changes in ChatProvider and AuthProvider
     final chatProvider = context.watch<ChatProvider>();
-    final authProvider = context.watch<AuthProvider>(); // For auth status if needed
+    final authProvider = context.watch<AuthProvider>();
 
     final messages = chatProvider.messages;
-    final isLoadingFromChatProvider = chatProvider.isLoading; // For assistant typing
+    final isLoadingFromChatProvider = chatProvider.isLoading;
     final errorMessage = chatProvider.errorMessage;
 
     // Scroll to bottom when new messages are added from provider
-    // or when keyboard visibility changes (though KeyboardAvoidingView helps)
+    // or when keyboard visibility changes.
+    // This ensures the latest message is always visible.
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
 
-    // Display error messages using SnackBar if an error occurs
     if (errorMessage != null && !isLoadingFromChatProvider && !_isErrorSnackbarShown) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) { // Ensure widget is still in the tree
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(errorMessage),
@@ -120,26 +120,24 @@ class _ChatScreenState extends State<ChatScreen> {
                 label: 'DISMISS',
                 textColor: Colors.white,
                 onPressed: () {
-                  chatProvider.clearError(); // Clear error on dismiss
+                  chatProvider.clearError();
                   _isErrorSnackbarShown = false;
                 },
               ),
             ),
           );
-          _isErrorSnackbarShown = true; // Set flag to prevent multiple snackbars
+          _isErrorSnackbarShown = true;
         }
       });
     } else if (errorMessage == null && _isErrorSnackbarShown) {
-      // Reset flag if error is cleared
       _isErrorSnackbarShown = false;
     }
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Orion Chat'),
-        // Example: Show global loading from AuthProvider (e.g. during sign-out)
         actions: [
-          if (authProvider.isLoading)
+          if (authProvider.isLoading) // Global auth loading (e.g. sign-out)
             const Padding(
               padding: EdgeInsets.only(right: 16.0),
               child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
@@ -149,40 +147,35 @@ class _ChatScreenState extends State<ChatScreen> {
       body: Column(
         children: <Widget>[
           Expanded(
+            // The ListView.builder displays items from the 'messages' list.
+            // With 'reverse: true', messages[0] is at the bottom, messages[length-1] is at the top.
             child: ListView.builder(
               controller: _scrollController,
               padding: const EdgeInsets.all(8.0),
-              reverse: true, // Crucial for chat UI
+              reverse: true, // Crucial for chat UI: items build from bottom up
               itemCount: messages.length,
               itemBuilder: (BuildContext context, int index) {
+                // 'messages' list is assumed to be ordered: newest first (index 0)
+                // due to ChatProvider inserting new messages at index 0.
                 final message = messages[index];
                 return ChatMessageBubble(
                   message: message,
-                  // TODO: Implement retry for error bubbles.
-                  // This would typically involve storing the failed message details
-                  // and calling a retry method in ChatProvider.
-                  // onTap: message.status == MessageStatus.error
-                  //     ? () {
-                  //         print("Retry message ID: ${message.id}");
-                  //         // chatProvider.retrySendMessage(message.id); // Example
-                  //       }
-                  //     : null,
                 );
               },
             ),
           ),
-          // Display "Assistant is typing..." indicator
+          // "Assistant is typing..." indicator
           if (isLoadingFromChatProvider && messages.isNotEmpty && messages.first.sender == MessageSender.assistant && messages.first.status == MessageStatus.sending)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0), // Added more vertical padding
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  const SizedBox(width: 15, height: 15, child: CircularProgressIndicator(strokeWidth: 2)),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5)),
+                  const SizedBox(width: 10),
                   Text(
                     "Assistant is thinking...",
-                    style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey.shade600),
+                    style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey.shade700, fontSize: 14),
                   ),
                 ],
               ),
@@ -190,8 +183,7 @@ class _ChatScreenState extends State<ChatScreen> {
           MessageInputBar(
             controller: _textController,
             onSendPressed: _handleSendPressed,
-            isSending: isLoadingFromChatProvider, // Disable input bar while assistant is "typing"
-            // onMicPressed: () { print("Mic pressed - To be implemented"); },
+            isSending: isLoadingFromChatProvider,
           ),
         ],
       ),

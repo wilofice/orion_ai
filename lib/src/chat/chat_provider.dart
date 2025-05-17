@@ -74,8 +74,8 @@ class ChatProvider with ChangeNotifier {
     );
 
     // Add user message and loading bubble to the start of the list (for reversed view)
-    _messages.insert(0, assistantLoadingMessage);
     _messages.insert(0, userMessage);
+    _messages.insert(0, assistantLoadingMessage);
     notifyListeners();
 
     try {
