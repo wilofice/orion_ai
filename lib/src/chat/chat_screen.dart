@@ -135,7 +135,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Orion Chat'),
+        title: const Text('Orion'),
         actions: [
           if (authProvider.isLoading) // Global auth loading (e.g. sign-out)
             const Padding(

@@ -34,6 +34,9 @@ dependencies:
   # State Management (Choose one)
   # State Management (Choose one)
   flutter_bloc: ^9.1.0
+  flutter_secure_storage: ^9.2.2
+  flutter_web_auth_2: ^3.0.3
+  crypto: ^3.0.3
   # provider: ^6.1.1
   # flutter_riverpod: ^2.4.0
 

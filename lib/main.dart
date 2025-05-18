@@ -53,20 +53,10 @@ class _OrionAppState extends State<OrionApp> {
     return MultiProvider( // Use MultiProvider for multiple providers
       providers: [
         ChangeNotifierProvider<AuthProvider>.value(value: _authProvider),
-        // Provide ChatProvider, it needs ChatService
-        // Option 1: If ChatProvider takes ChatService in constructor
         ChangeNotifierProvider<ChatProvider>(
           create: (_) => ChatProvider(chatService: _chatService /*, authProvider: _authProvider (if needed)*/),
         ),
-        // Option 2: Using ProxyProvider if ChatProvider needs AuthProvider updates
-        // ChangeNotifierProxyProvider<AuthProvider, ChatProvider>(
-        //   create: (context) => ChatProvider(
-        //     chatService: _chatService,
-        //     authProvider: Provider.of<AuthProvider>(context, listen: false),
-        //   ),
-        //   update: (context, auth, previousChatProvider) =>
-        //       previousChatProvider!..updateAuthProvider(auth), // Requires updateAuthProvider method
-        // ),
+
       ],
       child: Builder(
           builder: (context) {
@@ -74,9 +64,9 @@ class _OrionAppState extends State<OrionApp> {
             return MaterialApp.router(
               title: 'Orion Calendar Assistant',
               theme: ThemeData(
-                primarySwatch: Colors.blue,
+                primarySwatch: Colors.indigo,
                 visualDensity: VisualDensity.adaptivePlatformDensity,
-                useMaterial3: true,
+                useMaterial3: false,
               ),
               routerConfig: router,
               debugShowCheckedModeBanner: false,
@@ -84,65 +74,5 @@ class _OrionAppState extends State<OrionApp> {
           }
       ),
     );
-  }
-}
-
-// Placeholder widget to demonstrate consuming AuthProvider
-// This logic will typically be in your RootNavigator (FE-TASK-7)
-class AuthGate extends StatelessWidget {
-  const AuthGate({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    // Listen to AuthProvider
-    final authProvider = Provider.of<AuthProvider>(context);
-
-    if (authProvider.isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (authProvider.isAuthenticated) {
-      // Replace with your main app screen/navigator
-      return Scaffold(
-        appBar: AppBar(title: const Text('Orion Main App')),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('Welcome, ${authProvider.currentUser?.displayName ?? authProvider.currentUser?.email ?? 'User'}!'),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () => authProvider.signOut(),
-                child: const Text('Sign Out'),
-              ),
-            ],
-          ),
-        ),
-      );
-    } else {
-      // Replace with your LoginScreen (FE-TASK-6)
-      // For now, just a button to trigger login
-      return Scaffold(
-        appBar: AppBar(title: const Text('Orion Login')),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (authProvider.errorMessage != null)
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(authProvider.errorMessage!, style: const TextStyle(color: Colors.red)),
-                ),
-              ElevatedButton(
-                onPressed: () => authProvider.signInWithGoogle(),
-                child: const Text('Sign in with Google'),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
   }
 }
