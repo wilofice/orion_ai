@@ -1,0 +1,1822 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "AI Calendar Events Manager Backend",
+        "description": "API service to handle user chat prompts and orchestrate LLM calls and tool execution.",
+        "version": "0.1.0"
+    },
+    "servers": [
+        {
+            "url": "/Prod"
+        }
+    ],
+    "paths": {
+        "/auth/google/connect": {
+            "post": {
+                "tags": [
+                    "Authentication",
+                    "Authentication"
+                ],
+                "summary": "Exchange Google authorization code for JWT",
+                "description": "Exchanges a Google OAuth authorization code for access/refresh tokens and generates a JWT for API authentication.",
+                "operationId": "connect_google_calendar_auth_google_connect_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Body_connect_google_calendar_auth_google_connect_post"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successfully authenticated and generated JWT",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request (bad platform or OAuth error)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Google authentication service unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/auth/google/disconnect": {
+            "post": {
+                "tags": [
+                    "Authentication",
+                    "Authentication"
+                ],
+                "summary": "Disconnect Google Calendar",
+                "operationId": "disconnect_google_calendar_auth_auth_google_disconnect_post",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DisconnectResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/auth/calendar/meta/list-calendars": {
+            "get": {
+                "tags": [
+                    "Authentication",
+                    "Calendar"
+                ],
+                "summary": "List Google Calendars",
+                "operationId": "list_google_calendars_auth_calendar_meta_list_calendars_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/auth/auth/google/refresh-test": {
+            "post": {
+                "tags": [
+                    "Authentication",
+                    "Authentication"
+                ],
+                "summary": "Test Refresh Token",
+                "operationId": "test_refresh_token_auth_auth_google_refresh_test_post",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/auth/me": {
+            "get": {
+                "tags": [
+                    "Authentication",
+                    "Authentication"
+                ],
+                "summary": "Get Current User Info",
+                "description": "Get the currently authenticated user's information from the JWT token.",
+                "operationId": "get_current_user_info_auth_me_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CurrentUserResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/chat/prompt": {
+            "post": {
+                "tags": [
+                    "Chat",
+                    "Chat"
+                ],
+                "summary": "Process a user chat prompt",
+                "description": "Sends user input to the Orion orchestration service for processing via LLM and potential tool execution.",
+                "operationId": "process_chat_prompt_chat_prompt_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChatRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ChatResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorDetail"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorDetail"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorDetail"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorDetail"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorDetail"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/conversations/{user_id}": {
+            "get": {
+                "tags": [
+                    "Conversations"
+                ],
+                "summary": "List User Conversations",
+                "description": "Return all chat sessions for the given user.",
+                "operationId": "list_user_conversations_conversations__user_id__get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "User Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Conversation"
+                                    },
+                                    "title": "Response List User Conversations Conversations  User Id  Get"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{user_id}/upcoming": {
+            "get": {
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Get Upcoming Events",
+                "description": "Retrieve upcoming events for a user from their Google Calendar.\n\nArgs:\n    user_id: The ID of the user to fetch events for\n    days: Number of days to look ahead (default: 7)\n    timezone: Timezone for the query (default: UTC)\n    \nReturns:\n    EventsResponse with list of upcoming events\n    \nRaises:\n    HTTPException: If authentication fails or calendar access errors occur",
+                "operationId": "get_upcoming_events_events__user_id__upcoming_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "User Id"
+                        }
+                    },
+                    {
+                        "name": "days",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 7,
+                            "title": "Days"
+                        }
+                    },
+                    {
+                        "name": "timezone",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "UTC",
+                            "title": "Timezone"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EventsResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{user_id}/busy-slots": {
+            "get": {
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Get Busy Slots",
+                "description": "Retrieve busy time slots for a user from their Google Calendar.\nThis endpoint returns TimeSlot objects representing when the user is busy.\n\nArgs:\n    user_id: The ID of the user to fetch busy slots for\n    days: Number of days to look ahead (default: 7)\n    timezone: Timezone for the query (default: UTC)\n    \nReturns:\n    Dictionary with busy slots information\n    \nRaises:\n    HTTPException: If authentication fails or calendar access errors occur",
+                "operationId": "get_busy_slots_events__user_id__busy_slots_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "User Id"
+                        }
+                    },
+                    {
+                        "name": "days",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 7,
+                            "title": "Days"
+                        }
+                    },
+                    {
+                        "name": "timezone",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "UTC",
+                            "title": "Timezone"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true,
+                                    "title": "Response Get Busy Slots Events  User Id  Busy Slots Get"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/preferences/{user_id}": {
+            "post": {
+                "tags": [
+                    "User Preferences"
+                ],
+                "summary": "Create User Preferences",
+                "description": "Create new user preferences.\n\nArgs:\n    user_id: The user ID to create preferences for\n    request: The preferences data\n    \nReturns:\n    PreferencesResponse with created preferences\n    \nRaises:\n    HTTPException: If preferences already exist or creation fails",
+                "operationId": "create_user_preferences_preferences__user_id__post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "User Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreatePreferencesRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PreferencesResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "User Preferences"
+                ],
+                "summary": "Get Preferences",
+                "description": "Retrieve user preferences.\n\nArgs:\n    user_id: The user ID to get preferences for\n    \nReturns:\n    PreferencesResponse with user preferences\n    \nRaises:\n    HTTPException: If preferences not found",
+                "operationId": "get_preferences_preferences__user_id__get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "User Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PreferencesResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "User Preferences"
+                ],
+                "summary": "Update Preferences",
+                "description": "Update existing user preferences.\n\nArgs:\n    user_id: The user ID to update preferences for\n    request: The fields to update\n    \nReturns:\n    Success message\n    \nRaises:\n    HTTPException: If preferences not found or update fails",
+                "operationId": "update_preferences_preferences__user_id__put",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "User Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdatePreferencesRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                        "type": "string"
+                                    },
+                                    "title": "Response Update Preferences Preferences  User Id  Put"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "User Preferences"
+                ],
+                "summary": "Reset Preferences",
+                "description": "Reset (delete) user preferences.\n\nArgs:\n    user_id: The user ID to reset preferences for\n    \nReturns:\n    Success message\n    \nRaises:\n    HTTPException: If deletion fails",
+                "operationId": "reset_preferences_preferences__user_id__delete",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "User Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                        "type": "string"
+                                    },
+                                    "title": "Response Reset Preferences Preferences  User Id  Delete"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Health Check",
+                "description": "Simple health check endpoint.",
+                "operationId": "health_check_health_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "AuthResponse": {
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "title": "Message"
+                    },
+                    "user_id": {
+                        "type": "string",
+                        "title": "User Id"
+                    },
+                    "access_token": {
+                        "type": "string",
+                        "title": "Access Token"
+                    },
+                    "token_type": {
+                        "type": "string",
+                        "title": "Token Type",
+                        "default": "bearer"
+                    },
+                    "expires_in": {
+                        "type": "integer",
+                        "title": "Expires In"
+                    },
+                    "user_info": {
+                        "$ref": "#/components/schemas/UserInfo"
+                    },
+                    "tokens_received": {
+                        "$ref": "#/components/schemas/TokenInfo"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "message",
+                    "user_id",
+                    "access_token",
+                    "expires_in",
+                    "user_info",
+                    "tokens_received"
+                ],
+                "title": "AuthResponse",
+                "description": "Response model for successful Google OAuth authentication."
+            },
+            "Body_connect_google_calendar_auth_google_connect_post": {
+                "properties": {
+                    "payload": {
+                        "$ref": "#/components/schemas/GoogleAuthCodePayload"
+                    },
+                    "current_user": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/User"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "payload"
+                ],
+                "title": "Body_connect_google_calendar_auth_google_connect_post"
+            },
+            "CalendarEvent": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Id",
+                        "description": "Unique identifier for the event"
+                    },
+                    "title": {
+                        "type": "string",
+                        "title": "Title",
+                        "description": "Event title/summary"
+                    },
+                    "start_time": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Start Time",
+                        "description": "Event start time (timezone-aware)"
+                    },
+                    "end_time": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "End Time",
+                        "description": "Event end time (timezone-aware)"
+                    },
+                    "description": {
+                        "type": "string",
+                        "title": "Description",
+                        "description": "Event description",
+                        "default": ""
+                    },
+                    "location": {
+                        "type": "string",
+                        "title": "Location",
+                        "description": "Event location",
+                        "default": ""
+                    },
+                    "attendees": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "title": "Attendees",
+                        "description": "List of attendee emails"
+                    },
+                    "is_all_day": {
+                        "type": "boolean",
+                        "title": "Is All Day",
+                        "description": "Whether this is an all-day event",
+                        "default": false
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "title",
+                    "start_time",
+                    "end_time"
+                ],
+                "title": "CalendarEvent",
+                "description": "Represents a calendar event."
+            },
+            "ChatRequest": {
+                "properties": {
+                    "user_id": {
+                        "type": "string",
+                        "title": "User Id",
+                        "description": "Unique identifier for the user making the request."
+                    },
+                    "session_id": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Session Id",
+                        "description": "Optional identifier for the ongoing chat session. Helps maintain conversation history."
+                    },
+                    "prompt_text": {
+                        "type": "string",
+                        "title": "Prompt Text",
+                        "description": "The natural language input from the user."
+                    },
+                    "client_context": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Client Context",
+                        "description": "Optional arbitrary JSON object providing client-side context (e.g., current view, timezone)."
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "user_id",
+                    "prompt_text"
+                ],
+                "title": "ChatRequest",
+                "description": "Request model for the chat prompt endpoint."
+            },
+            "ChatResponse": {
+                "properties": {
+                    "session_id": {
+                        "type": "string",
+                        "title": "Session Id",
+                        "description": "Identifier for the chat session (can be new or existing)."
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/ResponseStatus",
+                        "description": "Indicates the outcome of processing the prompt."
+                    },
+                    "response_text": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Response Text",
+                        "description": "The natural language response to be displayed to the user. Required unless status is 'error'."
+                    },
+                    "clarification_options": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Clarification Options",
+                        "description": "Optional list of suggestions or options if status is 'needs_clarification'."
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "session_id",
+                    "status"
+                ],
+                "title": "ChatResponse",
+                "description": "Response model for a successful chat prompt processing."
+            },
+            "Conversation": {
+                "properties": {
+                    "session_id": {
+                        "type": "string",
+                        "title": "Session Id"
+                    },
+                    "user_id": {
+                        "type": "string",
+                        "title": "User Id"
+                    },
+                    "history": {
+                        "items": {
+                            "$ref": "#/components/schemas/ConversationTurn"
+                        },
+                        "type": "array",
+                        "title": "History"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "session_id",
+                    "user_id",
+                    "history"
+                ],
+                "title": "Conversation"
+            },
+            "ConversationRole": {
+                "type": "string",
+                "enum": [
+                    "USER",
+                    "SYSTEM",
+                    "AI",
+                    "FUNCTION"
+                ],
+                "title": "ConversationRole",
+                "description": "Indicates the originator of a message in the conversation history."
+            },
+            "ConversationTurn": {
+                "properties": {
+                    "role": {
+                        "$ref": "#/components/schemas/ConversationRole",
+                        "description": "The role of the entity providing the content (user, model, or function)."
+                    },
+                    "parts": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "$ref": "#/components/schemas/FunctionCall"
+                                },
+                                {
+                                    "$ref": "#/components/schemas/ToolResult"
+                                }
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Parts",
+                        "description": "The content of the turn. Usually a list containing a single item (text, function call, or function response)."
+                    },
+                    "timestamp": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Timestamp",
+                        "description": "Optional timestamp of when the turn occurred. Can be used for logging or debugging."
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "role",
+                    "parts"
+                ],
+                "title": "ConversationTurn",
+                "description": "Represents a single turn in the conversation history."
+            },
+            "CreatePreferencesRequest": {
+                "properties": {
+                    "user_id": {
+                        "type": "string",
+                        "title": "User Id",
+                        "description": "Unique identifier for the user"
+                    },
+                    "time_zone": {
+                        "type": "string",
+                        "title": "Time Zone",
+                        "description": "User's primary timezone (e.g., 'Europe/Paris', 'America/New_York')"
+                    },
+                    "working_hours": {
+                        "$ref": "#/components/schemas/WorkingHoursInput",
+                        "description": "Working hours for each day of the week"
+                    },
+                    "preferred_meeting_times": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "$ref": "#/components/schemas/TimeWindow"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Preferred Meeting Times",
+                        "description": "Preferred time windows for meetings"
+                    },
+                    "days_off": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Days Off",
+                        "description": "List of dates (YYYY-MM-DD) when user is unavailable"
+                    },
+                    "preferred_break_duration_minutes": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Preferred Break Duration Minutes",
+                        "description": "Default break duration in minutes",
+                        "default": 15
+                    },
+                    "work_block_max_duration_minutes": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Work Block Max Duration Minutes",
+                        "description": "Maximum continuous work duration in minutes",
+                        "default": 90
+                    },
+                    "preferred_activity_durations": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": {
+                                    "type": "integer"
+                                },
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Preferred Activity Durations",
+                        "description": "Preferred duration in minutes for activity categories"
+                    },
+                    "energy_levels": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": {
+                                    "type": "string"
+                                },
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Energy Levels",
+                        "description": "Energy levels for different time windows"
+                    },
+                    "social_preferences": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Social Preferences",
+                        "description": "Social scheduling preferences"
+                    },
+                    "rest_preferences": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Rest Preferences",
+                        "description": "Rest and sleep preferences"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "user_id",
+                    "time_zone",
+                    "working_hours"
+                ],
+                "title": "CreatePreferencesRequest",
+                "description": "Request model for creating user preferences"
+            },
+            "CurrentUserResponse": {
+                "properties": {
+                    "user_id": {
+                        "type": "string",
+                        "title": "User Id"
+                    },
+                    "username": {
+                        "type": "string",
+                        "title": "Username"
+                    },
+                    "authenticated": {
+                        "type": "boolean",
+                        "title": "Authenticated"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "user_id",
+                    "username",
+                    "authenticated"
+                ],
+                "title": "CurrentUserResponse",
+                "description": "Response model for current user information."
+            },
+            "DisconnectResponse": {
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "title": "Message"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "message"
+                ],
+                "title": "DisconnectResponse",
+                "description": "Response model for disconnecting Google Calendar."
+            },
+            "ErrorDetail": {
+                "properties": {
+                    "error_code": {
+                        "type": "string",
+                        "title": "Error Code",
+                        "description": "A unique code identifying the type of error."
+                    },
+                    "message": {
+                        "type": "string",
+                        "title": "Message",
+                        "description": "A user-friendly error message."
+                    },
+                    "details": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Details",
+                        "description": "Optional additional details about the error."
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "error_code",
+                    "message"
+                ],
+                "title": "ErrorDetail",
+                "description": "Schema for standard error responses."
+            },
+            "ErrorResponse": {
+                "properties": {
+                    "detail": {
+                        "type": "string",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "detail"
+                ],
+                "title": "ErrorResponse",
+                "description": "Standard error response model."
+            },
+            "EventsResponse": {
+                "properties": {
+                    "user_id": {
+                        "type": "string",
+                        "title": "User Id",
+                        "description": "User ID for which events were fetched"
+                    },
+                    "events": {
+                        "items": {
+                            "$ref": "#/components/schemas/CalendarEvent"
+                        },
+                        "type": "array",
+                        "title": "Events",
+                        "description": "List of calendar events"
+                    },
+                    "time_range": {
+                        "additionalProperties": {
+                            "type": "string",
+                            "format": "date-time"
+                        },
+                        "type": "object",
+                        "title": "Time Range",
+                        "description": "Time range for the query"
+                    },
+                    "total_events": {
+                        "type": "integer",
+                        "title": "Total Events",
+                        "description": "Total number of events found"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "user_id",
+                    "events",
+                    "time_range",
+                    "total_events"
+                ],
+                "title": "EventsResponse",
+                "description": "Response model for events endpoint."
+            },
+            "FunctionCall": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "description": "The name of the function to call."
+                    },
+                    "args": {
+                        "additionalProperties": true,
+                        "type": "object",
+                        "title": "Args",
+                        "description": "The arguments to pass to the function, as provided by the model."
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "name",
+                    "args"
+                ],
+                "title": "FunctionCall",
+                "description": "Represents a function call requested by the Gemini model."
+            },
+            "GoogleAuthCodePayload": {
+                "properties": {
+                    "authorization_code": {
+                        "type": "string",
+                        "title": "Authorization Code"
+                    },
+                    "platform": {
+                        "type": "string",
+                        "title": "Platform"
+                    },
+                    "code_verifier": {
+                        "type": "string",
+                        "title": "Code Verifier"
+                    },
+                    "redirect_uri": {
+                        "type": "string",
+                        "minLength": 1,
+                        "format": "uri",
+                        "title": "Redirect Uri"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "authorization_code",
+                    "platform",
+                    "code_verifier",
+                    "redirect_uri"
+                ],
+                "title": "GoogleAuthCodePayload",
+                "description": "Request body for sending Google authorization code to the backend."
+            },
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        },
+                        "type": "array",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+            },
+            "PreferencesResponse": {
+                "properties": {
+                    "user_id": {
+                        "type": "string",
+                        "title": "User Id"
+                    },
+                    "time_zone": {
+                        "type": "string",
+                        "title": "Time Zone"
+                    },
+                    "working_hours": {
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/TimeWindow"
+                        },
+                        "type": "object",
+                        "title": "Working Hours"
+                    },
+                    "preferred_meeting_times": {
+                        "items": {
+                            "$ref": "#/components/schemas/TimeWindow"
+                        },
+                        "type": "array",
+                        "title": "Preferred Meeting Times"
+                    },
+                    "days_off": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "title": "Days Off"
+                    },
+                    "preferred_break_duration_minutes": {
+                        "type": "integer",
+                        "title": "Preferred Break Duration Minutes"
+                    },
+                    "work_block_max_duration_minutes": {
+                        "type": "integer",
+                        "title": "Work Block Max Duration Minutes"
+                    },
+                    "preferred_activity_durations": {
+                        "additionalProperties": {
+                            "type": "integer"
+                        },
+                        "type": "object",
+                        "title": "Preferred Activity Durations"
+                    },
+                    "energy_levels": {
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "type": "object",
+                        "title": "Energy Levels"
+                    },
+                    "social_preferences": {
+                        "additionalProperties": true,
+                        "type": "object",
+                        "title": "Social Preferences"
+                    },
+                    "rest_preferences": {
+                        "additionalProperties": true,
+                        "type": "object",
+                        "title": "Rest Preferences"
+                    },
+                    "created_at": {
+                        "type": "integer",
+                        "title": "Created At"
+                    },
+                    "updated_at": {
+                        "type": "integer",
+                        "title": "Updated At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "user_id",
+                    "time_zone",
+                    "working_hours",
+                    "preferred_meeting_times",
+                    "days_off",
+                    "preferred_break_duration_minutes",
+                    "work_block_max_duration_minutes",
+                    "preferred_activity_durations",
+                    "energy_levels",
+                    "social_preferences",
+                    "rest_preferences",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "PreferencesResponse",
+                "description": "Response model for user preferences"
+            },
+            "ResponseStatus": {
+                "type": "string",
+                "enum": [
+                    "completed",
+                    "needs_clarification",
+                    "error"
+                ],
+                "title": "ResponseStatus",
+                "description": "Enum for the status field in ChatResponse."
+            },
+            "TimeWindow": {
+                "properties": {
+                    "start": {
+                        "type": "string",
+                        "title": "Start",
+                        "description": "Start time in HH:MM format"
+                    },
+                    "end": {
+                        "type": "string",
+                        "title": "End",
+                        "description": "End time in HH:MM format"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "start",
+                    "end"
+                ],
+                "title": "TimeWindow",
+                "description": "Helper model for time windows in requests"
+            },
+            "TokenInfo": {
+                "properties": {
+                    "access_token_present": {
+                        "type": "boolean",
+                        "title": "Access Token Present"
+                    },
+                    "refresh_token_present": {
+                        "type": "boolean",
+                        "title": "Refresh Token Present"
+                    },
+                    "id_token_present": {
+                        "type": "boolean",
+                        "title": "Id Token Present"
+                    },
+                    "scopes": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Scopes"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "access_token_present",
+                    "refresh_token_present",
+                    "id_token_present"
+                ],
+                "title": "TokenInfo",
+                "description": "Information about which tokens were received from Google."
+            },
+            "ToolResult": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "description": "The name of the function that was called."
+                    },
+                    "response": {
+                        "additionalProperties": true,
+                        "type": "object",
+                        "title": "Response",
+                        "description": "The result of the function execution, structured as a dictionary. Should contain keys like 'status', 'message', 'result_data', etc. Needs to be serializable (e.g., JSON)."
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "name",
+                    "response"
+                ],
+                "title": "ToolResult",
+                "description": "Represents the result of executing a tool (function call)."
+            },
+            "UpdatePreferencesRequest": {
+                "properties": {
+                    "time_zone": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Time Zone",
+                        "description": "User's primary timezone"
+                    },
+                    "working_hours": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/WorkingHoursInput"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "description": "Working hours for each day of the week"
+                    },
+                    "preferred_meeting_times": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "$ref": "#/components/schemas/TimeWindow"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Preferred Meeting Times",
+                        "description": "Preferred time windows for meetings"
+                    },
+                    "days_off": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Days Off",
+                        "description": "List of dates when user is unavailable"
+                    },
+                    "preferred_break_duration_minutes": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Preferred Break Duration Minutes",
+                        "description": "Default break duration in minutes"
+                    },
+                    "work_block_max_duration_minutes": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Work Block Max Duration Minutes",
+                        "description": "Maximum continuous work duration in minutes"
+                    },
+                    "preferred_activity_durations": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": {
+                                    "type": "integer"
+                                },
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Preferred Activity Durations",
+                        "description": "Preferred duration in minutes for activity categories"
+                    },
+                    "energy_levels": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": {
+                                    "type": "string"
+                                },
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Energy Levels",
+                        "description": "Energy levels for different time windows"
+                    },
+                    "social_preferences": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Social Preferences",
+                        "description": "Social scheduling preferences"
+                    },
+                    "rest_preferences": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Rest Preferences",
+                        "description": "Rest and sleep preferences"
+                    }
+                },
+                "type": "object",
+                "title": "UpdatePreferencesRequest",
+                "description": "Request model for updating user preferences"
+            },
+            "User": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Id"
+                    },
+                    "username": {
+                        "type": "string",
+                        "title": "Username"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "username"
+                ],
+                "title": "User"
+            },
+            "UserInfo": {
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "title": "Email"
+                    },
+                    "google_user_id": {
+                        "type": "string",
+                        "title": "Google User Id"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "email",
+                    "google_user_id"
+                ],
+                "title": "UserInfo",
+                "description": "User information extracted from Google ID token."
+            },
+            "ValidationError": {
+                "properties": {
+                    "loc": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Location"
+                    },
+                    "msg": {
+                        "type": "string",
+                        "title": "Message"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Error Type"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "loc",
+                    "msg",
+                    "type"
+                ],
+                "title": "ValidationError"
+            },
+            "WorkingHoursInput": {
+                "properties": {
+                    "monday": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/TimeWindow"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "tuesday": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/TimeWindow"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "wednesday": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/TimeWindow"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "thursday": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/TimeWindow"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "friday": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/TimeWindow"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "saturday": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/TimeWindow"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "sunday": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/TimeWindow"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "title": "WorkingHoursInput",
+                "description": "Helper model for working hours input"
+            }
+        },
+        "securitySchemes": {
+            "HTTPBearer": {
+                "type": "http",
+                "scheme": "bearer"
+            }
+        }
+    }
+}
