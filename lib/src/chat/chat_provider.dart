@@ -90,6 +90,7 @@ class ChatProvider with ChangeNotifier {
         promptText: requestData.promptText,
         sessionId: requestData.sessionId,
         clientContext: requestData.clientContext,
+        userId: userId, // If ChatService.sendMessage requires userId
         // Note: ChatService internally gets userId from FirebaseAuth.instance.currentUser
         // So, passing userId to ChatService.sendMessage might be redundant if it's designed that way.
         // For this example, we assume ChatService's sendMessage expects prompt, sessionId, clientContext.

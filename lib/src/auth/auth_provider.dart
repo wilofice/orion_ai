@@ -23,7 +23,11 @@ class AuthProvider with ChangeNotifier {
   String? _googleAccessToken; // Store Google Access token if needed for direct API calls
 
   StreamSubscription<fb_auth.User?>? _authStateSubscription;
-
+  
+  bool _isCalendarLinked = false;
+  String _currentUserUuid = '';
+  bool get isCalendarLinked => _isCalendarLinked;
+  String get currentUserUuid => _currentUserUuid;
   AuthProvider({
     fb_auth.FirebaseAuth? firebaseAuth,
     GoogleSignIn? googleSignIn,
@@ -41,6 +45,9 @@ class AuthProvider with ChangeNotifier {
     _listenToAuthChanges();
   }
 
+
+
+
   // --- Getters for state ---
   fb_auth.User? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
@@ -48,7 +55,8 @@ class AuthProvider with ChangeNotifier {
   String? get googleIdToken => _googleIdToken;
   String? get googleAccessToken => _googleAccessToken;
 
-  bool get isAuthenticated => _currentUser != null;
+  //bool get isAuthenticated => _currentUser != null;
+  bool get isAuthenticated => true;
 
   // --- Step 4.5: Listen to auth state changes ---
   void _listenToAuthChanges() {
@@ -184,6 +192,28 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+// In your AuthProvider class
+// bool _isGoogleCalendarLinked = false;
+// bool get isGoogleCalendarLinked => _isGoogleCalendarLinked;
+// String? _appSessionToken; // If your app uses its own session tokens
+
+  void updateUserGoogleCalendarLinkStatus({String? newAppSessionToken, required bool isCalendarLinked, required String currentUserUuid}) {
+      // if (newAppSessionToken != null) {
+      //   _appSessionToken = newAppSessionToken;
+      //   // Potentially update _isAuthenticated or other relevant flags
+      // }
+      // _isGoogleCalendarLinked = isCalendarLinked;
+      // print("AuthProvider: Google Calendar linked status updated to $isCalendarLinked");
+      // print("AuthProvider: App session token updated: $newAppSessionToken");
+
+      // CRITICAL: Update any state that your AppRouter's redirect logic depends on.
+      // For example, if linking Google Calendar also authenticates the user in your app:
+      // _status = AuthenticationStatus.authenticated;
+      // _user = User(id: 'some_user_id_from_backend'); // Or however you manage user state
+      _isCalendarLinked = isCalendarLinked;
+      _currentUserUuid = currentUserUuid;
+      notifyListeners(); // This is crucial to trigger GoRouter's refreshListenable
+  }
   // --- Step 4.6: Expose methods (already done by making them public) ---
   // State is exposed via getters.
 

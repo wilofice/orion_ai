@@ -65,7 +65,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final chatProvider = Provider.of<ChatProvider>(context, listen: false);
 
-    if (authProvider.currentUser == null) {
+    if (authProvider.currentUserUuid.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('You must be logged in to send messages.'),
@@ -81,7 +81,8 @@ class _ChatScreenState extends State<ChatScreen> {
     _isErrorSnackbarShown = false; // Reset snackbar flag
 
     // Call ChatProvider to handle sending the message
-    chatProvider.sendUserMessage(text, authProvider.currentUser!.uid);
+    chatProvider.sendUserMessage(text, authProvider.currentUserUuid);
+    //chatProvider.sendUserMessage(text, authProvider.currentUser!.uid);
 
     _textController.clear();
     FocusScope.of(context).unfocus(); // Dismiss keyboard

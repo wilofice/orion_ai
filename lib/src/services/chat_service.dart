@@ -7,8 +7,8 @@ import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 // Replace with your actual backend API URL
 // Use environment variables or a config file in a real application
 const String _apiBaseUrl = 'https://ww62jfo5jh.execute-api.eu-north-1.amazonaws.com/Prod'; // Replace with your production URL
-
-const String _chatEndpoint = '$_apiBaseUrl/v1/chat/prompt';
+//const String _apiBaseUrl = 'http://192.168.1.22:8001/Prod'; // Replace with your production URL
+const String _chatEndpoint = '$_apiBaseUrl/chat/prompt';
 
 // --- Data Structures (Step 8.2) ---
 // Matches the backend ChatRequest schema (from Task ORCH-3)
@@ -142,20 +142,21 @@ class ChatService {
     required String promptText,
     String? sessionId,
     Map<String, dynamic>? clientContext,
+    required String userId,
   }) async {
     debugPrint('ChatService: Preparing to send message...');
 
     // 1. Get current user and Firebase ID token
-    final fb_auth.User? currentUser = _firebaseAuth.currentUser;
-    if (currentUser == null) {
-      debugPrint('ChatService Error: No authenticated user found.');
-      throw ChatServiceError('User not authenticated. Please sign in.',
-          statusCode: 401, errorCode: 'NOT_AUTHENTICATED');
-    }
+    // final fb_auth.User? currentUser = _firebaseAuth.currentUser;
+    // if (currentUser == null) {
+    //   debugPrint('ChatService Error: No authenticated user found.');
+    //   throw ChatServiceError('User not authenticated. Please sign in.',
+    //       statusCode: 401, errorCode: 'NOT_AUTHENTICATED');
+    // }
 
     String? idToken;
     try {
-      idToken = await currentUser.getIdToken(false); // forceRefresh: false
+      //idToken = await currentUser.getIdToken(false); // forceRefresh: false
       debugPrint('ChatService: Got Firebase ID token.');
     } catch (e) {
       debugPrint('ChatService Error: Failed to get Firebase ID token: $e');
@@ -165,11 +166,9 @@ class ChatService {
           errorCode: 'TOKEN_FETCH_FAILED');
     }
 
-    var user_auth = 'user_from_apple';
     // 2. Prepare the full request body
     final requestData = ChatRequestData(
-      //userId: currentUser.uid,
-      userId: user_auth,
+      userId: userId,
       promptText: promptText,
       sessionId: sessionId,
       clientContext: clientContext,
@@ -232,35 +231,3 @@ class ChatService {
     }
   }
 }
-
-// --- Example Usage (Conceptual - Call this from ChatManager/Provider) ---
-/*
-Future<void> exampleSendMessage(BuildContext context, String prompt) async {
-  // Assuming ChatService is provided via Provider or accessible globally
-  // final chatService = Provider.of<ChatService>(context, listen: false);
-  final chatService = ChatService(); // For standalone example
-
-  try {
-    final response = await chatService.sendMessage(
-      promptText: prompt,
-      sessionId: "some-session-id-123", // Manage this in your chat state
-    );
-    debugPrint('Chat Response Received:');
-    debugPrint('  Session ID: ${response.sessionId}');
-    debugPrint('  Status: ${response.status}');
-    debugPrint('  Text: ${response.responseText}');
-    debugPrint('  Clarifications: ${response.clarificationOptions}');
-    // Update UI based on response
-  } on ChatServiceError catch (e) {
-    debugPrint('Chat Service Error:');
-    debugPrint('  Message: ${e.message}');
-    debugPrint('  Status Code: ${e.statusCode}');
-    debugPrint('  Error Code: ${e.errorCode}');
-    debugPrint('  Details: ${e.errorDetails}');
-    // Show specific error message to user
-  } catch (e) {
-    debugPrint('An unexpected error occurred: $e');
-    // Show generic error message
-  }
-}
-*/

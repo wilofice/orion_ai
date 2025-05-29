@@ -8,6 +8,7 @@ import 'src/auth/auth_provider.dart'; // Adjust path as needed
 import 'src/navigation/app_router.dart';
 import 'src/services/chat_service.dart'; // Import ChatService
 import 'src/chat/chat_provider.dart'; // Import ChatProvider
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 // Import your RootNavigator or initial app widget
 // import 'package:orion_app/src/navigation/root_navigator.dart'; // Example
 
@@ -16,6 +17,7 @@ import 'firebase_options.dart'; // Ensure this file exists and is configured
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+    await dotenv.load();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );

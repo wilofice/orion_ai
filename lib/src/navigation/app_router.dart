@@ -1,15 +1,20 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:orion_ai/src/auth/google_auth.dart';
 import 'package:provider/provider.dart';
-import '../chat/chat_screen.dart'; // Adjust path
-import '../events/event_list_screen.dart'; // Adjust path
-import '../preferences/preferences_screen.dart'; // Adjust path
-import '../auth/auth_provider.dart'; // Adjust path
-import '../auth/login_screen.dart'; // Adjust path // Adjust path
-import '../navigation/main_tabs_screen.dart'; // Adjust path
 
-// For root navigator key, useful for global navigation context
+// Adjust paths as per your project structure
+import '../chat/chat_screen.dart';
+import '../events/event_list_screen.dart';
+import '../preferences/preferences_screen.dart';
+import '../auth/auth_provider.dart';
+import '../auth/login_screen.dart';
+import '../navigation/main_tabs_screen.dart';
+// --- IMPORT THE NEW GOOGLE AUTH SCREEN ---
+import '../auth/google_auth.dart'; // Adjust path as needed
+
+// Navigator keys
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 final GlobalKey<NavigatorState> _shellNavigatorKeyChat = GlobalKey<NavigatorState>(debugLabel: 'shellChat');
 final GlobalKey<NavigatorState> _shellNavigatorKeyEvent = GlobalKey<NavigatorState>(debugLabel: 'shellEvent');
@@ -25,12 +30,11 @@ class AppRouter {
   GoRouter get router {
     _router ??= GoRouter(
       navigatorKey: _rootNavigatorKey,
-      initialLocation: '/chat', // Default initial location if authenticated
-      debugLogDiagnostics: true, // Helpful for debugging navigation
-      refreshListenable: authProvider, // Re-evaluate routes when AuthProvider notifies
-      redirect: _redirectLogic, // Step 6.5: Implement redirect logic
+      initialLocation: '/link-google-calendar', // Default initial location if authenticated
+      debugLogDiagnostics: true,
+      refreshListenable: authProvider,
+      redirect: _redirectLogic,
       routes: <RouteBase>[
-        // --- Login Route (Step 6.3, 6.6) ---
         GoRoute(
           path: '/login',
           name: 'login',
@@ -38,14 +42,22 @@ class AppRouter {
             return const LoginScreen();
           },
         ),
-        // --- Main App Shell Route with Bottom Navigation (Step 6.4) ---
+        // --- ADDED ROUTE FOR GOOGLE AUTH SCREEN ---
+        GoRoute(
+          path: '/link-google-calendar', // You can choose any path you prefer
+          name: 'linkGoogleCalendar',
+          builder: (BuildContext context, GoRouterState state) {
+            // GoogleAuthScreen is the widget we created previously.
+            // Ensure you have the correct import for it.
+            return const GoogleAuthScreen();
+          },
+        ),
+        // ---@ Main App Shell Route with Bottom Navigation ---
         StatefulShellRoute.indexedStack(
           builder: (BuildContext context, GoRouterState state, StatefulNavigationShell navigationShell) {
-            // Return the MainTabsScreen that wraps the navigationShell
             return MainTabsScreen(navigationShell: navigationShell);
           },
           branches: <StatefulShellBranch>[
-            // Branch for the Chat tab
             StatefulShellBranch(
               navigatorKey: _shellNavigatorKeyChat,
               routes: <RouteBase>[
@@ -56,7 +68,6 @@ class AppRouter {
                 ),
               ],
             ),
-            // Branch for the Events tab
             StatefulShellBranch(
               navigatorKey: _shellNavigatorKeyEvent,
               routes: <RouteBase>[
@@ -67,7 +78,6 @@ class AppRouter {
                 ),
               ],
             ),
-            // Branch for the Preferences tab
             StatefulShellBranch(
               navigatorKey: _shellNavigatorKeyPrefs,
               routes: <RouteBase>[
@@ -87,34 +97,54 @@ class AppRouter {
     return _router!;
   }
 
-  // --- Step 6.5: Redirect Logic ---
   FutureOr<String?> _redirectLogic(BuildContext context, GoRouterState state) {
     final bool isAuthenticated = authProvider.isAuthenticated;
-    final bool isLoading = authProvider.isLoading; // Check if still loading initial auth state
+    final bool isLoading = authProvider.isLoading;
     final String loginLocation = '/login';
-    final String homeLocation = '/chat'; // Default screen after login
+    final String homeLocation = '/chat';
+    // The location for the Google Calendar linking screen
+    final String linkGoogleCalendarLocation = '/link-google-calendar';
 
     print('AppRouter Redirect: isAuthenticated=$isAuthenticated, isLoading=$isLoading, location=${state.matchedLocation}');
 
     if (isLoading) {
-      // If still loading initial auth state, don't redirect yet.
-      // GoRouter might show a blank screen or initial route briefly.
-      // Consider a dedicated loading route or handling in App.
-      return null; // No redirect while loading initial state
+      return null; // No redirect while loading initial auth state
     }
 
     final bool isLoggingIn = state.matchedLocation == loginLocation;
+    final bool isLinkingCalendar = state.matchedLocation == linkGoogleCalendarLocation;
 
-    if (!isAuthenticated && !isLoggingIn) {
-      print('AppRouter Redirect: Not authenticated and not on login page, redirecting to $loginLocation');
-      return loginLocation; // Redirect to login if not authenticated and not already on login
-    }
-    if (isAuthenticated && isLoggingIn) {
-      print('AppRouter Redirect: Authenticated and on login page, redirecting to $homeLocation');
-      return homeLocation; // Redirect to home if authenticated and currently on login
+    // If the user is not authenticated:
+    if (!isAuthenticated) {
+      // Allow access to login and the Google Calendar linking screen (if it's part of a flow accessible without full app login)
+      // If /link-google-calendar should ONLY be accessible AFTER app login, then remove `|| isLinkingCalendar`
+      if (isLoggingIn || isLinkingCalendar) {
+        print('AppRouter Redirect: Not authenticated but on a public route ($loginLocation or $linkGoogleCalendarLocation). No redirect.');
+        return null;
+      }
+      print('AppRouter Redirect: Not authenticated, redirecting to $loginLocation');
+      return loginLocation;
     }
 
-    print('AppRouter Redirect: No redirect needed.');
+    // If the user IS authenticated:
+    if (isAuthenticated) {
+      if (isLoggingIn) {
+        // If authenticated and on login page, redirect to home
+        print('AppRouter Redirect: Authenticated and on login page, redirecting to $linkGoogleCalendarLocation');
+        return linkGoogleCalendarLocation;
+      }
+      if(state.matchedLocation == linkGoogleCalendarLocation && !authProvider.isCalendarLinked) {
+        // If authenticated and on link-google-calendar page, redirect to home
+        print('AppRouter Redirect: Not Authenticated and on link-google-calendar page, redirecting to link-google-calendar page.');
+        return linkGoogleCalendarLocation;
+      } 
+      else if(state.matchedLocation == linkGoogleCalendarLocation && authProvider.isCalendarLinked) {
+        print('AppRouter Redirect: Authenticated and on link-google-calendar page, redirecting to home.');
+        return homeLocation;
+      }
+    }
+
+    print('AppRouter Redirect: No redirect needed for location: ${state.matchedLocation}');
     return null; // No redirect needed
   }
 }
