@@ -3,11 +3,18 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 // Import your AuthProvider
 import 'src/auth/auth_provider.dart'; // Adjust path as needed
 import 'src/navigation/app_router.dart';
-import 'src/services/chat_service.dart'; // Import ChatService
-import 'src/chat/chat_provider.dart'; // Import ChatProvider
+import 'src/services/chat_service.dart';
+import 'src/chat/chat_provider.dart';
+import 'src/services/cache_service.dart';
+import 'src/services/calendar_service.dart';
+import 'src/services/connectivity_service.dart';
+import 'src/services/preference_service.dart';
+import 'src/events/event_provider.dart';
+import 'src/preferences/preferences_provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 // Import your RootNavigator or initial app widget
 // import 'package:orion_app/src/navigation/root_navigator.dart'; // Example
@@ -18,6 +25,7 @@ import 'firebase_options.dart'; // Ensure this file exists and is configured
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load();
+  await Hive.initFlutter();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -35,6 +43,10 @@ class _OrionAppState extends State<OrionApp> {
   late final AuthProvider _authProvider;
   late final AppRouter _appRouter;
   late final ChatService _chatService;
+  late final CacheService _cacheService;
+  late final ConnectivityService _connectivityService;
+  late final CalendarService _calendarService;
+  late final PreferenceService _preferenceService;
 
   @override
   void initState() {
@@ -42,6 +54,14 @@ class _OrionAppState extends State<OrionApp> {
     _authProvider = AuthProvider();
     _appRouter = AppRouter(authProvider: _authProvider);
     _chatService = ChatService(authProvider: _authProvider);
+    _cacheService = CacheService();
+    _connectivityService = ConnectivityService();
+    _calendarService = CalendarService(authProvider: _authProvider);
+    _preferenceService = PreferenceService(
+      cacheService: _cacheService,
+      connectivityService: _connectivityService,
+      authProvider: _authProvider,
+    );
   }
 
   @override
@@ -52,13 +72,25 @@ class _OrionAppState extends State<OrionApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider( // Use MultiProvider for multiple providers
+    return MultiProvider(
       providers: [
         ChangeNotifierProvider<AuthProvider>.value(value: _authProvider),
         ChangeNotifierProvider<ChatProvider>(
-          create: (_) => ChatProvider(chatService: _chatService /*, authProvider: _authProvider (if needed)*/),
+          create: (_) => ChatProvider(chatService: _chatService),
         ),
-
+        ChangeNotifierProvider<ConnectivityService>.value(
+            value: _connectivityService),
+        ChangeNotifierProvider<EventProvider>(
+          create: (_) => EventProvider(
+              calendarService: _calendarService,
+              cacheService: _cacheService,
+              connectivityService: _connectivityService),
+        ),
+        ChangeNotifierProvider<PreferencesProvider>(
+          create: (_) => PreferencesProvider(
+              preferenceService: _preferenceService,
+              connectivityService: _connectivityService),
+        ),
       ],
       child: Builder(
           builder: (context) {
