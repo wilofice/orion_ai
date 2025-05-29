@@ -98,7 +98,7 @@ class AppRouter {
   }
 
   FutureOr<String?> _redirectLogic(BuildContext context, GoRouterState state) {
-    final bool isAuthenticated = authProvider.isAuthenticated;
+    final bool isAuthenticated = authProvider.isAuthenticated || authProvider.isCalendarLinked;
     final bool isLoading = authProvider.isLoading;
     final String loginLocation = '/login';
     final String homeLocation = '/chat';

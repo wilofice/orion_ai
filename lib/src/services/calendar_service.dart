@@ -3,7 +3,8 @@ import 'package:http/http.dart' as http;
 import '../auth/auth_provider.dart';
 import '../events/calendar_event.dart';
 
-const String _apiBaseUrl = 'https://ww62jfo5jh.execute-api.eu-north-1.amazonaws.com/Prod';
+const String _apiBaseUrl = 'http://192.168.1.22:8001/Prod';
+//const String _apiBaseUrl = 'https://ww62jfo5jh.execute-api.eu-north-1.amazonaws.com/Prod';
 const String _eventsEndpoint = _apiBaseUrl + '/events';
 
 class CalendarServiceError extends Error {

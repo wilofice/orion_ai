@@ -47,8 +47,8 @@ class _GoogleAuthScreenState extends State<GoogleAuthScreen> {
     'https://www.googleapis.com/auth/calendar',
   ];
   // --- Backend Configuration (MUST BE REPLACED) ---
-  //static const String backendApiBaseUrl = "http://192.168.1.22:8001/Prod";
-  static const String backendApiBaseUrl = "https://ww62jfo5jh.execute-api.eu-north-1.amazonaws.com/Prod"; // <<<< REPLACE THIS (e.g., https://api.yourapp.com)
+  static const String backendApiBaseUrl = "http://192.168.1.22:8001/Prod";
+  //static const String backendApiBaseUrl = "https://ww62jfo5jh.execute-api.eu-north-1.amazonaws.com/Prod"; // <<<< REPLACE THIS (e.g., https://api.yourapp.com)
    // <<<< REPLACE THIS (e.g., https://api.yourapp.com)
   static const String googleConnectEndpoint =
       "/auth/google/connect"; // Example endpoint path

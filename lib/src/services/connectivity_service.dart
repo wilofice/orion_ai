@@ -4,11 +4,10 @@ import 'package:flutter/material.dart';
 
 class ConnectivityService with ChangeNotifier {
   bool _isOnline = true;
-  late final StreamSubscription<ConnectivityResult> _subscription;
+  late final StreamSubscription<List<ConnectivityResult>> _subscription;
 
   ConnectivityService() {
-    _subscription =
-        Connectivity().onConnectivityChanged.listen(_updateStatus);
+    _subscription = Connectivity().onConnectivityChanged.listen(_updateStatus);
     _init();
   }
 
@@ -19,7 +18,8 @@ class ConnectivityService with ChangeNotifier {
     _updateStatus(result);
   }
 
-  void _updateStatus(ConnectivityResult result) {
+  void _updateStatus(List<ConnectivityResult> results) {
+    var result = results.isNotEmpty ? results.first : ConnectivityResult.none;
     final online = result != ConnectivityResult.none;
     if (online != _isOnline) {
       _isOnline = online;
