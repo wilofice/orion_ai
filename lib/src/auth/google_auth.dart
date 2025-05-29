@@ -5,9 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart'; // For web authentication
 import 'package:http/http.dart' as http; // For making HTTP requests to the backend
 import 'package:orion_ai/src/auth/auth_provider.dart';
-import 'package:orion_ai/src/chat/chat_screen.dart'; // Import your chat screen
-import 'package:orion_ai/src/chat/chat_provider.dart'; // Import your chat screen
-import 'package:orion_ai/src/services/chat_service.dart';
+import 'package:go_router/go_router.dart';
 // import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // For app's own session tokens (if needed for backend auth)
 
 import 'dart:io';
@@ -258,6 +256,9 @@ class _GoogleAuthScreenState extends State<GoogleAuthScreen> {
       if (response.statusCode == 200 || response.statusCode == 201) {
         // Successfully connected with backend
         final responseData = jsonDecode(response.body);
+        final accessToken = responseData['access_token'] as String?;
+        final userId = responseData['user_id'] as String?;
+        final expires = responseData['expires_in'] as int? ?? 0;
         setState(() {
           _isLoading = false;
           _status =
@@ -279,13 +280,15 @@ class _GoogleAuthScreenState extends State<GoogleAuthScreen> {
 
         // TODO: Navigate to the next screen or update UI to show connected status persistently
 
-        if (mounted) { // Check if the widget is still in the tree
-          context.read<AuthProvider>().updateUserGoogleCalendarLinkStatus(
-                newAppSessionToken: "ppSessionToken", // If backend issues a new/updated app token
-                isCalendarLinked: true,
-                currentUserUuid: responseData['user_id'], // Pass user UUID or ID from backend
-                // any other relevant data from backend
-              );
+        if (mounted && accessToken != null && userId != null) {
+          await context.read<AuthProvider>().saveBackendAuth(
+            accessToken: accessToken,
+            expiresIn: expires,
+            userId: userId,
+          );
+          if (context.mounted) {
+            context.go('/chat');
+          }
         }
       } else {
         // Handle backend errors

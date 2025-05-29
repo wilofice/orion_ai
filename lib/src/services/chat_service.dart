@@ -1,7 +1,7 @@
 import 'dart:convert'; // For jsonEncode and jsonDecode
 import 'package:flutter/foundation.dart'; // For debugPrint
 import 'package:http/http.dart' as http;
-import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
+import '../auth/auth_provider.dart';
 
 // --- Configuration ---
 // Replace with your actual backend API URL
@@ -129,14 +129,14 @@ class ChatServiceError extends Error {
 
 // --- Service Implementation (Step 8.1 & 8.3) ---
 class ChatService {
-  final fb_auth.FirebaseAuth _firebaseAuth;
   final http.Client _httpClient; // For testability
+  final AuthProvider _authProvider;
 
   ChatService({
-    fb_auth.FirebaseAuth? firebaseAuth,
     http.Client? httpClient, // Allow injecting for tests
-  })  : _firebaseAuth = firebaseAuth ?? fb_auth.FirebaseAuth.instance,
-        _httpClient = httpClient ?? http.Client();
+    required AuthProvider authProvider,
+  })  : _httpClient = httpClient ?? http.Client(),
+        _authProvider = authProvider;
 
   Future<ChatResponseData> sendMessage({
     required String promptText,
@@ -146,24 +146,10 @@ class ChatService {
   }) async {
     debugPrint('ChatService: Preparing to send message...');
 
-    // 1. Get current user and Firebase ID token
-    // final fb_auth.User? currentUser = _firebaseAuth.currentUser;
-    // if (currentUser == null) {
-    //   debugPrint('ChatService Error: No authenticated user found.');
-    //   throw ChatServiceError('User not authenticated. Please sign in.',
-    //       statusCode: 401, errorCode: 'NOT_AUTHENTICATED');
-    // }
-
-    String? idToken;
-    try {
-      //idToken = await currentUser.getIdToken(false); // forceRefresh: false
-      debugPrint('ChatService: Got Firebase ID token.');
-    } catch (e) {
-      debugPrint('ChatService Error: Failed to get Firebase ID token: $e');
-      throw ChatServiceError(
-          'Failed to get authentication token: ${e.toString()}',
-          statusCode: 401,
-          errorCode: 'TOKEN_FETCH_FAILED');
+    final token = _authProvider.backendAccessToken;
+    if (token == null) {
+      throw ChatServiceError('Not authenticated with backend.',
+          statusCode: 401, errorCode: 'NO_BACKEND_TOKEN');
     }
 
     // 2. Prepare the full request body
@@ -182,7 +168,7 @@ class ChatService {
         Uri.parse(_chatEndpoint),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer apple',
+          'Authorization': 'Bearer $token',
           'Accept': 'application/json'
         },
         body: jsonEncode(requestData.toJson()),

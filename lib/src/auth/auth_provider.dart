@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart'; // For ChangeNotifier
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth; // Alias to avoid name clash
 import 'package:google_sign_in/google_sign_in.dart';
+import '../services/token_storage.dart';
 // For FirebaseException
 // import 'package:firebase_analytics/firebase_analytics.dart'; // For logging events
 
@@ -15,6 +16,11 @@ class AuthProvider with ChangeNotifier {
   final fb_auth.FirebaseAuth _firebaseAuth;
   final GoogleSignIn _googleSignIn;
   // final FirebaseAnalytics _analytics; // Optional: for logging
+
+  final TokenStorage _tokenStorage;
+
+  String? _backendAccessToken;
+  DateTime? _backendTokenExpiry;
 
   fb_auth.User? _currentUser;
   bool _isLoading = true; // Start true for initial auth state check
@@ -28,9 +34,12 @@ class AuthProvider with ChangeNotifier {
   String _currentUserUuid = '';
   bool get isCalendarLinked => _isCalendarLinked;
   String get currentUserUuid => _currentUserUuid;
+  String? get backendAccessToken => _backendAccessToken;
+  DateTime? get backendTokenExpiry => _backendTokenExpiry;
   AuthProvider({
     fb_auth.FirebaseAuth? firebaseAuth,
     GoogleSignIn? googleSignIn,
+    TokenStorage? tokenStorage,
     // FirebaseAnalytics? analytics,
   })  : _firebaseAuth = firebaseAuth ?? fb_auth.FirebaseAuth.instance,
         _googleSignIn = googleSignIn ?? GoogleSignIn(
@@ -40,9 +49,11 @@ class AuthProvider with ChangeNotifier {
           //   'https://www.googleapis.com/auth/calendar.readonly', // Example scope
           // ],
         )
-  // _analytics = analytics ?? FirebaseAnalytics.instance
-  {
+        // _analytics = analytics ?? FirebaseAnalytics.instance
+        ,
+        _tokenStorage = tokenStorage ?? const TokenStorage() {
     _listenToAuthChanges();
+    _loadStoredBackendToken();
   }
 
 
@@ -55,8 +66,7 @@ class AuthProvider with ChangeNotifier {
   String? get googleIdToken => _googleIdToken;
   String? get googleAccessToken => _googleAccessToken;
 
-  //bool get isAuthenticated => _currentUser != null;
-  bool get isAuthenticated => true;
+  bool get isAuthenticated => _currentUser != null;
 
   // --- Step 4.5: Listen to auth state changes ---
   void _listenToAuthChanges() {
@@ -67,6 +77,11 @@ class AuthProvider with ChangeNotifier {
         _currentUser = user;
         _googleIdToken = null; // Clear tokens on auth state change
         _googleAccessToken = null;
+        if (user == null) {
+          _backendAccessToken = null;
+          _backendTokenExpiry = null;
+          _isCalendarLinked = false;
+        }
 
         if (_isLoading) {
           _isLoading = false; // Finished initial check
@@ -79,6 +94,9 @@ class AuthProvider with ChangeNotifier {
         _currentUser = null;
         _googleIdToken = null;
         _googleAccessToken = null;
+        _backendAccessToken = null;
+        _backendTokenExpiry = null;
+        _isCalendarLinked = false;
         _errorMessage = "Error in authentication state: $error";
         if (_isLoading) {
           _isLoading = false;
@@ -86,6 +104,16 @@ class AuthProvider with ChangeNotifier {
         notifyListeners();
       },
     );
+  }
+
+  Future<void> _loadStoredBackendToken() async {
+    _backendAccessToken = await _tokenStorage.readAccessToken();
+    _backendTokenExpiry = await _tokenStorage.readExpiry();
+    _currentUserUuid = await _tokenStorage.readUserId() ?? '';
+    if (_backendAccessToken != null) {
+      _isCalendarLinked = true;
+    }
+    notifyListeners();
   }
 
   // --- Step 4.2: Implement signInWithGoogle ---
@@ -213,6 +241,30 @@ class AuthProvider with ChangeNotifier {
       _isCalendarLinked = isCalendarLinked;
       _currentUserUuid = currentUserUuid;
       notifyListeners(); // This is crucial to trigger GoRouter's refreshListenable
+  }
+
+  Future<void> saveBackendAuth({
+    required String accessToken,
+    required int expiresIn,
+    required String userId,
+  }) async {
+    _backendAccessToken = accessToken;
+    _backendTokenExpiry =
+        DateTime.now().add(Duration(seconds: expiresIn));
+    _currentUserUuid = userId;
+    _isCalendarLinked = true;
+    await _tokenStorage.saveToken(
+        accessToken: accessToken, expiresIn: expiresIn, userId: userId);
+    notifyListeners();
+  }
+
+  Future<void> clearBackendAuth() async {
+    _backendAccessToken = null;
+    _backendTokenExpiry = null;
+    _currentUserUuid = '';
+    _isCalendarLinked = false;
+    await _tokenStorage.clear();
+    notifyListeners();
   }
   // --- Step 4.6: Expose methods (already done by making them public) ---
   // State is exposed via getters.
