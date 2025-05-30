@@ -6,8 +6,8 @@ import '../auth/auth_provider.dart';
 // --- Configuration ---
 // Replace with your actual backend API URL
 // Use environment variables or a config file in a real application
-const String _apiBaseUrl = 'https://ww62jfo5jh.execute-api.eu-north-1.amazonaws.com/Prod'; // Replace with your production URL
-//const String _apiBaseUrl = 'http://192.168.1.22:8001/Prod'; // Replace with your production URL
+//const String _apiBaseUrl = 'https://ww62jfo5jh.execute-api.eu-north-1.amazonaws.com/Prod'; // Replace with your production URL
+const String _apiBaseUrl = 'http://192.168.1.22:8001/Prod'; // Replace with your production URL
 const String _chatEndpoint = '$_apiBaseUrl/chat/prompt';
 
 // --- Data Structures (Step 8.2) ---

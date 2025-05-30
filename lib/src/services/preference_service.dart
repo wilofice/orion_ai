@@ -64,7 +64,18 @@ class PreferenceService {
 
     return cached != null
         ? UserPreferences.fromJson(cached)
-        : UserPreferences(darkMode: false);
+        : UserPreferences(
+              userId: userId,
+              timeZone: '',
+              workingHours: const {},
+              preferredMeetingTimes: const [],
+              daysOff: const [],
+              preferredBreakDurationMinutes: 0,
+              workBlockMaxDurationMinutes: 0,
+              createdAt: 0,
+              updatedAt: 0,
+              darkMode: true
+            );
   }
 
   Future<void> savePreferences(UserPreferences prefs) async {
