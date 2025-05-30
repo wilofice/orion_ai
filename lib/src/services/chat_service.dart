@@ -83,6 +83,41 @@ class ChatResponseData {
   }
 }
 
+// Conversation data models for history retrieval
+class ConversationTurnData {
+  final String role;
+  final List<dynamic> parts;
+  final DateTime? timestamp;
+
+  ConversationTurnData({required this.role, required this.parts, this.timestamp});
+
+  factory ConversationTurnData.fromJson(Map<String, dynamic> json) {
+    return ConversationTurnData(
+      role: json['role'] as String? ?? '',
+      parts: (json['parts'] as List<dynamic>? ?? []).toList(),
+      timestamp: json['timestamp'] != null ? DateTime.tryParse(json['timestamp']) : null,
+    );
+  }
+}
+
+class ConversationData {
+  final String sessionId;
+  final String userId;
+  final List<ConversationTurnData> history;
+
+  ConversationData({required this.sessionId, required this.userId, required this.history});
+
+  factory ConversationData.fromJson(Map<String, dynamic> json) {
+    return ConversationData(
+      sessionId: json['session_id'] as String? ?? '',
+      userId: json['user_id'] as String? ?? '',
+      history: (json['history'] as List<dynamic>? ?? [])
+          .map((e) => ConversationTurnData.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
 // Matches the backend ErrorDetail schema
 class ApiErrorDetail {
   final String errorCode;
@@ -211,6 +246,46 @@ class ChatService {
         rethrow; // Re-throw ChatServiceErrors directly
       }
       throw ChatServiceError('An unexpected error occurred: ${e.toString()}', errorCode: 'UNEXPECTED_ERROR');
+    }
+  }
+
+  Future<List<ConversationData>> fetchConversations({required String userId}) async {
+    final token = _authProvider.backendAccessToken;
+    if (token == null) {
+      throw ChatServiceError('Not authenticated with backend.',
+          statusCode: 401, errorCode: 'NO_BACKEND_TOKEN');
+    }
+
+    final url = '${AppConfig.backendApiBaseUrl}/conversations/$userId';
+    try {
+      final response = await _httpClient.get(Uri.parse(url), headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json'
+      });
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
+        return data
+            .map((e) => ConversationData.fromJson(e as Map<String, dynamic>))
+            .toList();
+      } else {
+        ApiErrorDetail? errorDetail;
+        String errorMessage = 'Request failed with status ${response.statusCode}';
+        try {
+          final Map<String, dynamic> errorBody = jsonDecode(response.body);
+          errorDetail = ApiErrorDetail.fromJson(errorBody);
+          errorMessage = errorDetail.message;
+        } catch (_) {}
+        throw ChatServiceError(errorMessage,
+            statusCode: response.statusCode, errorCode: errorDetail?.errorCode);
+      }
+    } on http.ClientException catch (e) {
+      throw ChatServiceError('Network request failed: ${e.message}',
+          errorCode: 'NETWORK_ERROR');
+    } catch (e) {
+      if (e is ChatServiceError) rethrow;
+      throw ChatServiceError('An unexpected error occurred: ${e.toString()}',
+          errorCode: 'UNEXPECTED_ERROR');
     }
   }
 }

@@ -28,6 +28,10 @@ class _ChatScreenState extends State<ChatScreen> {
     super.initState();
     // Initial scroll if there are messages (e.g., welcome message from ChatProvider)
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = context.read<AuthProvider>();
+      if (auth.currentUserUuid.isNotEmpty) {
+        context.read<ChatProvider>().loadLatestConversation(auth.currentUserUuid);
+      }
       _scrollToBottom(animate: false);
     });
   }
