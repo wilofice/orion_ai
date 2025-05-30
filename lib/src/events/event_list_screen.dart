@@ -39,8 +39,8 @@ class _EventListScreenState extends State<EventListScreen> {
           final CalendarEvent e = eventProvider.events[index];
           return ListTile(
             title: Text(e.title),
-            subtitle:
-                Text('${e.start} - ${e.end}'),
+            subtitle: Text(
+                '${e.startTime} - ${e.endTime}\n${e.location.isNotEmpty ? e.location : ''}'),
           );
         },
       );

@@ -24,7 +24,7 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
   Widget build(BuildContext context) {
     final prefsProvider = context.watch<PreferencesProvider>();
     final connectivity = context.watch<ConnectivityService>();
-    final prefs = prefsProvider.preferences ?? UserPreferences(darkMode: false);
+    final prefs = prefsProvider.preferences;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Orion Preferences')),
@@ -42,9 +42,12 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
           if (prefsProvider.isLoading)
             const Expanded(
                 child: Center(child: CircularProgressIndicator()))
+          else if (prefs == null)
+            const Expanded(child: Center(child: Text('No preferences')))
           else
             Expanded(
               child: ListView(
+                padding: const EdgeInsets.all(8),
                 children: [
                   SwitchListTile(
                     title: const Text('Dark Mode'),
@@ -54,6 +57,21 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                       prefsProvider.updatePreferences(updated);
                     },
                   ),
+                  ListTile(
+                    title: const Text('Time Zone'),
+                    subtitle: Text(prefs.timeZone),
+                  ),
+                  ...prefs.workingHours.entries.map(
+                    (e) => ListTile(
+                      title: Text('Working Hours ${e.key}'),
+                      subtitle: Text('${e.value.start} - ${e.value.end}'),
+                    ),
+                  ),
+                  if (prefs.daysOff.isNotEmpty)
+                    ListTile(
+                      title: const Text('Days Off'),
+                      subtitle: Text(prefs.daysOff.join(', ')),
+                    ),
                 ],
               ),
             ),

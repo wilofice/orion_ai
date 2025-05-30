@@ -7,7 +7,7 @@ import 'connectivity_service.dart';
 
 const String _apiBaseUrl = 'http://192.168.1.22:8001/Prod';
 //const String _apiBaseUrl = 'https://ww62jfo5jh.execute-api.eu-north-1.amazonaws.com/Prod';
-const String _prefsEndpoint = _apiBaseUrl + '/preferences';
+String _prefsEndpoint(String userId) => '$_apiBaseUrl/preferences/$userId';
 const String _cacheKey = 'userPreferences';
 
 class PreferenceService {
@@ -33,14 +33,25 @@ class PreferenceService {
     }
 
     final token = _authProvider.backendAccessToken;
-    if (token == null) {
+    final userId = _authProvider.currentUserUuid;
+    if (token == null || userId.isEmpty) {
       return cached != null
           ? UserPreferences.fromJson(cached)
-          : UserPreferences(darkMode: false);
+          : UserPreferences(
+              userId: userId,
+              timeZone: '',
+              workingHours: const {},
+              preferredMeetingTimes: const [],
+              daysOff: const [],
+              preferredBreakDurationMinutes: 0,
+              workBlockMaxDurationMinutes: 0,
+              createdAt: 0,
+              updatedAt: 0,
+            );
     }
 
     try {
-      final response = await _client.get(Uri.parse(_prefsEndpoint), headers: {
+      final response = await _client.get(Uri.parse(_prefsEndpoint(userId)), headers: {
         'Authorization': 'Bearer $token',
         'Accept': 'application/json'
       });
@@ -59,17 +70,18 @@ class PreferenceService {
   Future<void> savePreferences(UserPreferences prefs) async {
     await _cacheService.saveObject(_cacheKey, prefs.toJson());
     final token = _authProvider.backendAccessToken;
-    if (token == null || !_connectivityService.isOnline) {
+    final userId = _authProvider.currentUserUuid;
+    if (token == null || !_connectivityService.isOnline || userId.isEmpty) {
       return;
     }
     try {
       await _client.post(
-        Uri.parse(_prefsEndpoint),
+        Uri.parse(_prefsEndpoint(userId)),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json'
         },
-        body: jsonEncode(prefs.toJson()),
+        body: jsonEncode(prefs.toBackendJson()),
       );
     } catch (_) {}
   }
