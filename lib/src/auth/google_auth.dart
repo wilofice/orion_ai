@@ -235,6 +235,10 @@ class _GoogleAuthScreenState extends State<GoogleAuthScreen> {
         'platform': Platform.isIOS ? 'ios' : 'android',
       };
 
+      final Map<String, String> payload = {
+              'payload': jsonEncode(requestBody)
+        };
+
       // Make the POST request
       final response = await http.post(
         Uri.parse(backendUrl), // Ensure the URL is correctly parsed
@@ -244,7 +248,7 @@ class _GoogleAuthScreenState extends State<GoogleAuthScreen> {
           // you would add it here:
           // 'Authorization': 'Bearer YOUR_APP_SESSION_TOKEN',
         },
-        body: jsonEncode(requestBody), // Encode the body to JSON
+        body: jsonEncode(payload), // Encode the body to JSON
       );
 
       // Process the response
