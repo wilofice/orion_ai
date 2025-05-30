@@ -3,6 +3,7 @@ import '../services/calendar_service.dart';
 import '../services/cache_service.dart';
 import '../services/connectivity_service.dart';
 import 'calendar_event.dart';
+import 'events_response.dart';
 
 class EventProvider with ChangeNotifier {
   final CalendarService _calendarService;
@@ -31,7 +32,9 @@ class EventProvider with ChangeNotifier {
 
     if (_connectivityService.isOnline) {
       try {
-        _events = await _calendarService.fetchEvents();
+        final EventsResponse response =
+            await _calendarService.fetchUpcomingEvents();
+        _events = response.events;
         await _cacheService.saveList(
             'events', _events.map((e) => e.toJson()).toList());
         _error = null;
