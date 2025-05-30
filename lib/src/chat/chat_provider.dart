@@ -1,6 +1,7 @@
 // lib/src/chat/chat_provider.dart
 
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart'; // For generating unique message IDs (add uuid to pubspec.yaml)
 
@@ -23,6 +24,7 @@ class ChatProvider with ChangeNotifier {
   String? _sessionId;
   bool _isLoading = false;
   String? _errorMessage;
+  bool _historyLoaded = false;
 
   // --- Getters for state ---
   List<ChatMessage> get messages => List.unmodifiable(_messages); // Return unmodifiable list
@@ -43,6 +45,36 @@ class ChatProvider with ChangeNotifier {
         sender: MessageSender.assistant,
         timestamp: DateTime.now()));
     // Note: notifyListeners() might be needed here if this is done after initial build
+  }
+
+  Future<void> loadLatestConversation(String userId) async {
+    if (_historyLoaded || userId.isEmpty) return;
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final sessions = await _chatService.fetchConversations(userId: userId);
+      if (sessions.isNotEmpty) {
+        sessions.sort((a, b) {
+          final aTime = a.history.isNotEmpty ? (a.history.last.timestamp ?? DateTime.fromMillisecondsSinceEpoch(0)) : DateTime.fromMillisecondsSinceEpoch(0);
+          final bTime = b.history.isNotEmpty ? (b.history.last.timestamp ?? DateTime.fromMillisecondsSinceEpoch(0)) : DateTime.fromMillisecondsSinceEpoch(0);
+          return bTime.compareTo(aTime);
+        });
+        final latest = sessions.first;
+        _sessionId = latest.sessionId;
+        _messages = latest.history.map((t) {
+          final part = t.parts.isNotEmpty ? t.parts.first : '';
+          final text = part is String ? part : part.toString();
+          final sender = t.role == 'USER' ? MessageSender.user : MessageSender.assistant;
+          return ChatMessage(id: 'hist-${_uuid.v4()}', text: text, sender: sender, timestamp: t.timestamp ?? DateTime.now());
+        }).toList().reversed.toList();
+      }
+      _historyLoaded = true;
+    } catch (e) {
+      debugPrint('ChatProvider: Failed to load conversations - $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   // --- Step 9.3: Implement sendUserMessage method ---
