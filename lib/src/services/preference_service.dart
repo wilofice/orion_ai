@@ -4,10 +4,10 @@ import '../auth/auth_provider.dart';
 import '../preferences/user_preferences.dart';
 import 'cache_service.dart';
 import 'connectivity_service.dart';
+import '../config.dart';
 
-const String _apiBaseUrl = 'http://192.168.1.22:8001/Prod';
-//const String _apiBaseUrl = 'https://ww62jfo5jh.execute-api.eu-north-1.amazonaws.com/Prod';
-String _prefsEndpoint(String userId) => '$_apiBaseUrl/preferences/$userId';
+String _prefsEndpoint(String userId) =>
+    '${AppConfig.backendApiBaseUrl}/preferences/$userId';
 const String _cacheKey = 'userPreferences';
 
 class PreferenceService {

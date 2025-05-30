@@ -5,6 +5,7 @@ import '/src/ui/widgets/chat_message_bubble.dart'; // Adjust path
 import '/src/ui/widgets/message_input_bar.dart'; // Adjust path
 import '/src/chat/chat_provider.dart'; // Adjust path
 import '/src/auth/auth_provider.dart'; // Adjust path for user ID
+import '/src/events/event_provider.dart';
 import 'package:provider/provider.dart';
 // Import ChatMessage model if it's defined separately, otherwise it's in chat_message_bubble.dart
 // from 'package:orion_app/src/models/chat_message.dart';
@@ -64,6 +65,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+    final eventProvider = Provider.of<EventProvider>(context, listen: false);
 
     if (authProvider.currentUserUuid.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -81,7 +83,8 @@ class _ChatScreenState extends State<ChatScreen> {
     _isErrorSnackbarShown = false; // Reset snackbar flag
 
     // Call ChatProvider to handle sending the message
-    chatProvider.sendUserMessage(text, authProvider.currentUserUuid);
+    chatProvider.sendUserMessage(text, authProvider.currentUserUuid,
+        eventProvider: eventProvider);
     //chatProvider.sendUserMessage(text, authProvider.currentUser!.uid);
 
     _textController.clear();

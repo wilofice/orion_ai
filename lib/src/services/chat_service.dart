@@ -2,9 +2,10 @@ import 'dart:convert'; // For jsonEncode and jsonDecode
 import 'package:flutter/foundation.dart'; // For debugPrint
 import 'package:http/http.dart' as http;
 import '../auth/auth_provider.dart';
+import '../config.dart';
 
-const String _apiBaseUrl = 'http://192.168.1.22:8001/Prod'; 
-const String _chatEndpoint = '$_apiBaseUrl/chat/prompt';
+String get _chatEndpoint =>
+    '${AppConfig.backendApiBaseUrl}/chat/prompt';
 
 // --- Data Structures (Step 8.2) ---
 // Matches the backend ChatRequest schema (from Task ORCH-3)
