@@ -6,6 +6,9 @@ import '/src/ui/widgets/message_input_bar.dart'; // Adjust path
 import '/src/chat/chat_provider.dart'; // Adjust path
 import '/src/auth/auth_provider.dart'; // Adjust path for user ID
 import '/src/events/event_provider.dart';
+import '/src/services/speech_service.dart';
+import '/src/preferences/preferences_provider.dart';
+import '/src/preferences/user_preferences.dart';
 import 'package:provider/provider.dart';
 // Import ChatMessage model if it's defined separately, otherwise it's in chat_message_bubble.dart
 // from 'package:orion_app/src/models/chat_message.dart';
@@ -21,11 +24,13 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _isErrorSnackbarShown = false;
+  late SpeechService _speechService;
 
 
   @override
   void initState() {
     super.initState();
+    _speechService = SpeechService();
     // Initial scroll if there are messages (e.g., welcome message from ChatProvider)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = context.read<AuthProvider>();
@@ -96,10 +101,20 @@ class _ChatScreenState extends State<ChatScreen> {
     // Scrolling will be triggered by the list update in the build method's postFrameCallback
   }
 
+  Future<void> _handleMicPressed() async {
+    final text = await _speechService.listenOnce();
+    if (text == null || text.trim().isEmpty) {
+      return;
+    }
+    _textController.text = text.trim();
+    _handleSendPressed();
+  }
+
   @override
   void dispose() {
     _textController.dispose();
     _scrollController.dispose();
+    _speechService.stop();
     super.dispose();
   }
 
@@ -107,6 +122,9 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     final chatProvider = context.watch<ChatProvider>();
     final authProvider = context.watch<AuthProvider>();
+    final prefs = context.watch<PreferencesProvider>().preferences;
+    final inputMode = prefs?.inputMode ?? InputMode.text;
+    final buttonPosition = prefs?.voiceButtonPosition ?? VoiceButtonPosition.right;
 
     final messages = chatProvider.messages;
     final isLoadingFromChatProvider = chatProvider.isLoading;
@@ -192,6 +210,9 @@ class _ChatScreenState extends State<ChatScreen> {
             controller: _textController,
             onSendPressed: _handleSendPressed,
             isSending: isLoadingFromChatProvider,
+            onMicPressed: (inputMode == InputMode.text) ? null : _handleMicPressed,
+            inputMode: inputMode,
+            voiceButtonPosition: buttonPosition,
           ),
         ],
       ),

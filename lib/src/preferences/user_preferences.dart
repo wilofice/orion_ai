@@ -1,3 +1,7 @@
+enum InputMode { text, voice, both }
+
+enum VoiceButtonPosition { left, right }
+
 class TimeWindow {
   final String start;
   final String end;
@@ -28,6 +32,8 @@ class UserPreferences {
   final int createdAt;
   final int updatedAt;
   final bool darkMode;
+  final InputMode inputMode;
+  final VoiceButtonPosition voiceButtonPosition;
 
   UserPreferences({
     required this.userId,
@@ -40,6 +46,8 @@ class UserPreferences {
     required this.createdAt,
     required this.updatedAt,
     this.darkMode = false,
+    this.inputMode = InputMode.text,
+    this.voiceButtonPosition = VoiceButtonPosition.right,
   });
 
   factory UserPreferences.fromJson(Map<String, dynamic> json) {
@@ -67,6 +75,12 @@ class UserPreferences {
       createdAt: json['created_at'] as int? ?? 0,
       updatedAt: json['updated_at'] as int? ?? 0,
       darkMode: json['darkMode'] as bool? ?? false,
+      inputMode: InputMode.values.firstWhere(
+          (e) => e.name == (json['input_mode'] as String?),
+          orElse: () => InputMode.text),
+      voiceButtonPosition: VoiceButtonPosition.values.firstWhere(
+          (e) => e.name == (json['voice_button_position'] as String?),
+          orElse: () => VoiceButtonPosition.right),
     );
   }
 
@@ -80,6 +94,8 @@ class UserPreferences {
         'days_off': daysOff,
         'preferred_break_duration_minutes': preferredBreakDurationMinutes,
         'work_block_max_duration_minutes': workBlockMaxDurationMinutes,
+        'input_mode': inputMode.name,
+        'voice_button_position': voiceButtonPosition.name,
       };
 
   Map<String, dynamic> toJson() => {
@@ -89,7 +105,12 @@ class UserPreferences {
         'darkMode': darkMode,
       };
 
-  UserPreferences copyWith({bool? darkMode, String? timeZone}) {
+  UserPreferences copyWith({
+    bool? darkMode,
+    String? timeZone,
+    InputMode? inputMode,
+    VoiceButtonPosition? voiceButtonPosition,
+  }) {
     return UserPreferences(
       userId: userId,
       timeZone: timeZone ?? this.timeZone,
@@ -101,6 +122,8 @@ class UserPreferences {
       createdAt: createdAt,
       updatedAt: updatedAt,
       darkMode: darkMode ?? this.darkMode,
+      inputMode: inputMode ?? this.inputMode,
+      voiceButtonPosition: voiceButtonPosition ?? this.voiceButtonPosition,
     );
   }
 }
