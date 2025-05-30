@@ -59,8 +59,8 @@ dependencies:
   # Connectivity
   connectivity_plus: ^6.1.4
 
-  # Speech to Text (Optional)
-  # speech_to_text: ^6.3.0
+  # Speech to Text (for voice input)
+  speech_to_text: ^6.3.0
 
   # UUID Generator
   uuid: ^4.5.1
