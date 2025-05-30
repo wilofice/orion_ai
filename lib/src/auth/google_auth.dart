@@ -6,7 +6,6 @@ import 'package:flutter_web_auth_2/flutter_web_auth_2.dart'; // For web authenti
 import 'package:http/http.dart' as http; // For making HTTP requests to the backend
 import 'package:orion_ai/src/auth/auth_provider.dart';
 import 'package:go_router/go_router.dart';
-// import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // For app's own session tokens (if needed for backend auth)
 
 import 'dart:io';
 
@@ -46,13 +45,8 @@ class _GoogleAuthScreenState extends State<GoogleAuthScreen> {
     'profile',
     'https://www.googleapis.com/auth/calendar',
   ];
-  // --- Backend Configuration (MUST BE REPLACED) ---
   static const String backendApiBaseUrl = "http://192.168.1.22:8001/Prod";
-  //static const String backendApiBaseUrl = "https://ww62jfo5jh.execute-api.eu-north-1.amazonaws.com/Prod"; // <<<< REPLACE THIS (e.g., https://api.yourapp.com)
-   // <<<< REPLACE THIS (e.g., https://api.yourapp.com)
-  static const String googleConnectEndpoint =
-      "/auth/google/connect"; // Example endpoint path
-  // --- End Configuration ---
+  static const String googleConnectEndpoint = "/auth/google/connect"; 
 
   @override
   void initState() {
