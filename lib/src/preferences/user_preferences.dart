@@ -89,10 +89,10 @@ class UserPreferences {
         'darkMode': darkMode,
       };
 
-  UserPreferences copyWith({bool? darkMode}) {
+  UserPreferences copyWith({bool? darkMode, String? timeZone}) {
     return UserPreferences(
       userId: userId,
-      timeZone: timeZone,
+      timeZone: timeZone ?? this.timeZone,
       workingHours: workingHours,
       preferredMeetingTimes: preferredMeetingTimes,
       daysOff: daysOff,

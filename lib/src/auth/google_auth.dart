@@ -12,6 +12,7 @@ import 'dart:io';
 import 'package:provider/provider.dart';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../config.dart';
 
 class GoogleAuthConfig {
   static final String googleClientIdIos = dotenv.env['GOOGLE_CLIENT_ID_IOS'] ?? '';
@@ -45,7 +46,7 @@ class _GoogleAuthScreenState extends State<GoogleAuthScreen> {
     'profile',
     'https://www.googleapis.com/auth/calendar',
   ];
-  static const String backendApiBaseUrl = "http://192.168.1.22:8001/Prod";
+  static final String backendApiBaseUrl = AppConfig.backendApiBaseUrl;
   static const String googleConnectEndpoint = "/auth/google/connect"; 
 
   @override

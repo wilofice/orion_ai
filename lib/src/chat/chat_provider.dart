@@ -8,6 +8,7 @@ import 'package:uuid/uuid.dart'; // For generating unique message IDs (add uuid 
 import '../ui/widgets/chat_message_bubble.dart'; // Adjust path
 // Assuming ChatService and its DTOs are defined
 import '../services/chat_service.dart'; // Adjust path
+import '../events/event_provider.dart';
 
 var _uuid = const Uuid(); // For generating unique IDs
 
@@ -45,7 +46,8 @@ class ChatProvider with ChangeNotifier {
   }
 
   // --- Step 9.3: Implement sendUserMessage method ---
-  Future<void> sendUserMessage(String text, String userId) async {
+  Future<void> sendUserMessage(String text, String userId,
+      {EventProvider? eventProvider}) async {
     if (text.trim().isEmpty || _isLoading) {
       return;
     }
@@ -164,6 +166,9 @@ class ChatProvider with ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+      if (eventProvider != null) {
+        eventProvider.loadEvents();
+      }
     }
   }
 

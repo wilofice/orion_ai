@@ -4,6 +4,14 @@ import '../services/connectivity_service.dart';
 import 'preferences_provider.dart';
 import 'user_preferences.dart';
 
+const List<String> _timeZones = [
+  'UTC',
+  'America/New_York',
+  'Europe/London',
+  'Europe/Berlin',
+  'Asia/Tokyo'
+];
+
 class PreferencesScreen extends StatefulWidget {
   const PreferencesScreen({super.key});
 
@@ -59,7 +67,27 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                   ),
                   ListTile(
                     title: const Text('Time Zone'),
-                    subtitle: Text(prefs.timeZone),
+                    subtitle: Text(prefs.timeZone.isEmpty ? 'Select' : prefs.timeZone),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () async {
+                      final selected = await showDialog<String>(
+                        context: context,
+                        builder: (context) => SimpleDialog(
+                          title: const Text('Select Time Zone'),
+                          children: _timeZones
+                              .map((tz) => SimpleDialogOption(
+                                    onPressed: () => Navigator.pop(context, tz),
+                                    child: Text(tz),
+                                  ))
+                              .toList(),
+                        ),
+                      );
+                      if (selected != null && selected.isNotEmpty) {
+                        prefsProvider.updatePreferences(
+                          prefs.copyWith(timeZone: selected),
+                        );
+                      }
+                    },
                   ),
                   ...prefs.workingHours.entries.map(
                     (e) => ListTile(

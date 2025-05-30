@@ -89,19 +89,29 @@ class _OrionAppState extends State<OrionApp> {
         ChangeNotifierProvider<PreferencesProvider>(
           create: (_) => PreferencesProvider(
               preferenceService: _preferenceService,
-              connectivityService: _connectivityService),
+              connectivityService: _connectivityService)
+            ..loadPreferences(),
         ),
       ],
       child: Builder(
           builder: (context) {
             final router = _appRouter.router;
+            final prefs = context.watch<PreferencesProvider>().preferences;
+            final darkMode = prefs?.darkMode ?? false;
             return MaterialApp.router(
               title: 'Orion Calendar Assistant',
               theme: ThemeData(
+                brightness: Brightness.light,
                 primarySwatch: Colors.indigo,
                 visualDensity: VisualDensity.adaptivePlatformDensity,
                 useMaterial3: false,
               ),
+              darkTheme: ThemeData(
+                brightness: Brightness.dark,
+                primarySwatch: Colors.indigo,
+                useMaterial3: false,
+              ),
+              themeMode: darkMode ? ThemeMode.dark : ThemeMode.light,
               routerConfig: router,
               debugShowCheckedModeBanner: false,
             );

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../services/connectivity_service.dart';
 import 'event_provider.dart';
 import 'calendar_event.dart';
+import 'package:intl/intl.dart';
 
 class EventListScreen extends StatefulWidget {
   const EventListScreen({super.key});
@@ -37,10 +38,20 @@ class _EventListScreenState extends State<EventListScreen> {
         itemCount: eventProvider.events.length,
         itemBuilder: (context, index) {
           final CalendarEvent e = eventProvider.events[index];
-          return ListTile(
-            title: Text(e.title),
-            subtitle: Text(
-                '${e.startTime} - ${e.endTime}\n${e.location.isNotEmpty ? e.location : ''}'),
+          final time =
+              '${DateFormat.yMMMd().add_jm().format(e.startTime)} - ${DateFormat.jm().format(e.endTime)}';
+          return Card(
+            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: ListTile(
+              title: Text(e.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(time),
+                  if (e.location.isNotEmpty) Text(e.location),
+                ],
+              ),
+            ),
           );
         },
       );
