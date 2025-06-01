@@ -2,6 +2,7 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart'; // For generating unique message IDs (add uuid to pubspec.yaml)
 
@@ -9,6 +10,7 @@ import 'package:uuid/uuid.dart'; // For generating unique message IDs (add uuid 
 import '../ui/widgets/chat_message_bubble.dart'; // Adjust path
 // Assuming ChatService and its DTOs are defined
 import '../services/chat_service.dart'; // Adjust path
+import '../services/audio_upload_service.dart';
 import '../events/event_provider.dart';
 
 var _uuid = const Uuid(); // For generating unique IDs
@@ -63,9 +65,23 @@ class ChatProvider with ChangeNotifier {
         _sessionId = latest.sessionId;
         _messages = latest.history.map((t) {
           final part = t.parts.isNotEmpty ? t.parts.first : '';
-          final text = part is String ? part : part.toString();
+          String text = '';
+          String? audioUrl;
+          if (part is String) {
+            text = part;
+          } else if (part is Map<String, dynamic>) {
+            text = part['transcript'] as String? ?? '';
+            audioUrl = part['audio_url'] as String?;
+          } else {
+            text = part.toString();
+          }
           final sender = t.role == 'USER' ? MessageSender.user : MessageSender.assistant;
-          return ChatMessage(id: 'hist-${_uuid.v4()}', text: text, sender: sender, timestamp: t.timestamp ?? DateTime.now());
+          return ChatMessage(
+              id: 'hist-${_uuid.v4()}',
+              text: text,
+              audioUrl: audioUrl,
+              sender: sender,
+              timestamp: t.timestamp ?? DateTime.now());
         }).toList().reversed.toList();
       }
       _historyLoaded = true;
@@ -123,6 +139,7 @@ class ChatProvider with ChangeNotifier {
       final response = await _chatService.sendMessage(
         promptText: requestData.promptText,
         sessionId: requestData.sessionId,
+        audioUrl: null,
         clientContext: requestData.clientContext,
         userId: userId, // If ChatService.sendMessage requires userId
         // Note: ChatService internally gets userId from FirebaseAuth.instance.currentUser
@@ -209,6 +226,95 @@ class ChatProvider with ChangeNotifier {
     if (_errorMessage != null) {
       _errorMessage = null;
       notifyListeners();
+    }
+  }
+
+  Future<void> sendAudioMessage({
+    required String transcript,
+    required File audioFile,
+    required String userId,
+    EventProvider? eventProvider,
+  }) async {
+    if (transcript.trim().isEmpty || _isLoading) {
+      return;
+    }
+
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    final String userMessageId = 'user-${_uuid.v4()}';
+    final String assistantLoadingMessageId = 'assistant-loading-${_uuid.v4()}';
+
+    final userMessage = ChatMessage(
+      id: userMessageId,
+      text: transcript.trim(),
+      audioUrl: null,
+      sender: MessageSender.user,
+      timestamp: DateTime.now(),
+      status: MessageStatus.sent,
+    );
+
+    final assistantLoadingMessage = ChatMessage(
+      id: assistantLoadingMessageId,
+      text: '',
+      sender: MessageSender.assistant,
+      timestamp: DateTime.now(),
+      status: MessageStatus.sending,
+    );
+
+    _messages.insert(0, userMessage);
+    _messages.insert(0, assistantLoadingMessage);
+    notifyListeners();
+
+    final uploadService = AudioUploadService(authProvider: _chatService.authProvider);
+    try {
+      final audioUrl = await uploadService.upload(audioFile);
+
+      final response = await _chatService.sendMessage(
+        promptText: transcript.trim(),
+        sessionId: _sessionId,
+        clientContext: {'audio_url': audioUrl},
+        userId: userId,
+        audioUrl: audioUrl,
+      );
+
+      if (response.sessionId != _sessionId) {
+        _sessionId = response.sessionId;
+      }
+
+      final loadingIndex = _messages.indexWhere((msg) => msg.id == assistantLoadingMessageId);
+      if (loadingIndex != -1) {
+        _messages[loadingIndex] = ChatMessage(
+          id: assistantLoadingMessageId,
+          text: response.responseText ?? 'Sorry, I received an empty response.',
+          sender: MessageSender.assistant,
+          timestamp: DateTime.now(),
+          status: response.status == BackendResponseStatus.completed ||
+                  response.status == BackendResponseStatus.needs_clarification
+              ? MessageStatus.sent
+              : MessageStatus.error,
+        );
+      }
+    } catch (e) {
+      debugPrint('ChatProvider: sendAudioMessage error - $e');
+      _errorMessage = 'Failed to send audio message';
+      final loadingIndex = _messages.indexWhere((msg) => msg.id == assistantLoadingMessageId);
+      if (loadingIndex != -1) {
+        _messages[loadingIndex] = ChatMessage(
+          id: assistantLoadingMessageId,
+          text: '',
+          sender: MessageSender.assistant,
+          timestamp: _messages[loadingIndex].timestamp,
+          status: MessageStatus.error,
+        );
+      }
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+      if (eventProvider != null) {
+        eventProvider.loadEvents();
+      }
     }
   }
 }

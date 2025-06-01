@@ -858,6 +858,18 @@
                         "title": "Session Id",
                         "description": "Optional identifier for the ongoing chat session. Helps maintain conversation history."
                     },
+                    "audio_url": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Audio Url",
+                        "description": "Optional S3 location of the voice recording."
+                    },
                     "prompt_text": {
                         "type": "string",
                         "title": "Prompt Text",

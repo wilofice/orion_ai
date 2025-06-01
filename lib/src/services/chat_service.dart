@@ -9,16 +9,19 @@ String get _chatEndpoint =>
 
 // --- Data Structures (Step 8.2) ---
 // Matches the backend ChatRequest schema (from Task ORCH-3)
+
 class ChatRequestData {
   final String userId; // Added here, will be populated from auth
   final String promptText;
   final String? sessionId;
+  final String? audioUrl;
   final Map<String, dynamic>? clientContext;
 
   ChatRequestData({
     required this.userId,
     required this.promptText,
     this.sessionId,
+    this.audioUrl,
     this.clientContext,
   });
 
@@ -27,6 +30,7 @@ class ChatRequestData {
       'user_id': userId,
       'prompt_text': promptText,
       if (sessionId != null) 'session_id': sessionId,
+      if (audioUrl != null) 'audio_url': audioUrl,
       if (clientContext != null) 'client_context': clientContext,
     };
   }
@@ -170,9 +174,12 @@ class ChatService {
   })  : _httpClient = httpClient ?? http.Client(),
         _authProvider = authProvider;
 
+  AuthProvider get authProvider => _authProvider;
+
   Future<ChatResponseData> sendMessage({
     required String promptText,
     String? sessionId,
+    String? audioUrl,
     Map<String, dynamic>? clientContext,
     required String userId,
   }) async {
@@ -189,6 +196,7 @@ class ChatService {
       userId: userId,
       promptText: promptText,
       sessionId: sessionId,
+      audioUrl: audioUrl,
       clientContext: clientContext,
     );
 
