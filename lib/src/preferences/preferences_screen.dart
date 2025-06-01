@@ -66,6 +66,55 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                     },
                   ),
                   ListTile(
+                    title: const Text('Input Mode'),
+                    subtitle: Text(prefs.inputMode.name),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () async {
+                      final selected = await showDialog<InputMode>(
+                        context: context,
+                        builder: (context) => SimpleDialog(
+                          title: const Text('Select Input Mode'),
+                          children: InputMode.values
+                              .map((m) => SimpleDialogOption(
+                                    onPressed: () => Navigator.pop(context, m),
+                                    child: Text(m.name),
+                                  ))
+                              .toList(),
+                        ),
+                      );
+                      if (selected != null) {
+                        prefsProvider.updatePreferences(
+                          prefs.copyWith(inputMode: selected),
+                        );
+                      }
+                    },
+                  ),
+                  if (prefs.inputMode == InputMode.both)
+                    ListTile(
+                      title: const Text('Voice Button Position'),
+                      subtitle: Text(prefs.voiceButtonPosition.name),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                      onTap: () async {
+                        final selected = await showDialog<VoiceButtonPosition>(
+                          context: context,
+                          builder: (context) => SimpleDialog(
+                            title: const Text('Select Button Position'),
+                            children: VoiceButtonPosition.values
+                                .map((p) => SimpleDialogOption(
+                                      onPressed: () => Navigator.pop(context, p),
+                                      child: Text(p.name),
+                                    ))
+                                .toList(),
+                          ),
+                        );
+                        if (selected != null) {
+                          prefsProvider.updatePreferences(
+                            prefs.copyWith(voiceButtonPosition: selected),
+                          );
+                        }
+                      },
+                    ),
+                  ListTile(
                     title: const Text('Time Zone'),
                     subtitle: Text(prefs.timeZone.isEmpty ? 'Select' : prefs.timeZone),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
