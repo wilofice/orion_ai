@@ -37,7 +37,7 @@ class _GoogleAuthScreenState extends State<GoogleAuthScreen> {
   static String googleClientIdIos = GoogleAuthConfig.googleClientIdIos; // <<<< REPLACE THIS
   static String googleClientIdAndroid = GoogleAuthConfig.googleClientIdAndroid; // <<<< REPLACE THIS
   static const String customUriSchemeIos = "com.googleusercontent.apps.242901186197-k0kflho05ctojg9da4vuvf88fe7c6d1b"; // <<<< REPLACE THIS
-  static const String customUriSchemeAndroid = "com.example.orionAi";
+  static const String customUriSchemeAndroid = "com.googleusercontent.apps.242901186197-b59i14n5oodp6e54t5iptcl1j1d91ql8";
   static const String redirectUriIos = "$customUriSchemeIos:/oauth2redirect";
   static const String redirectUriAndroid = "$customUriSchemeAndroid:/oauth2redirect";
   static const List<String> googleScopes = [
@@ -135,6 +135,15 @@ class _GoogleAuthScreenState extends State<GoogleAuthScreen> {
         callbackUrlScheme: Platform.isIOS
             ? customUriSchemeIos
             : customUriSchemeAndroid,
+        options: FlutterWebAuth2Options(
+          preferEphemeral: true, // Set to true for private/incognito sessions
+          debugOrigin: null, // Use null for production
+            intentFlags: ephemeralIntentFlags, 
+          timeout: 15, // Timeout in seconds
+          landingPageHtml: null, // Use default landing page HTML
+          silentAuth: false, // Set to true for silent authentication
+          // Set to true for webview-based authentication
+        ),
       );
       debugPrint("Authentication Result URL: $resultUrlString");
 
@@ -218,8 +227,7 @@ class _GoogleAuthScreenState extends State<GoogleAuthScreen> {
     if (!_isLoading) {
       setState(() {
         _isLoading = true;
-        _status =
-            'Sending code to backend...'; // Update status if not already set by caller
+        _status = 'Sending code to backend...'; // Update status if not already set by caller
       });
     }
 
@@ -235,8 +243,8 @@ class _GoogleAuthScreenState extends State<GoogleAuthScreen> {
         'platform': Platform.isIOS ? 'ios' : 'android',
       };
 
-      final Map<String, String> payload = {
-              'payload': jsonEncode(requestBody)
+      final Map<String, Map<String, String>> payload = {
+              'payload': requestBody
         };
 
       // Make the POST request
@@ -473,32 +481,7 @@ class _GoogleAuthScreenState extends State<GoogleAuthScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 30),
-            _buildSetupInstructions(),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSetupInstructions() {
-    return Card(
-      color: Colors.amber.shade50,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: BorderSide(color: Colors.amber.shade200),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-              ],
-            ),
-],
         ),
       ),
     );
