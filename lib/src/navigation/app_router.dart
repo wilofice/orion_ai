@@ -85,7 +85,7 @@ class AppRouter {
   }
 
   FutureOr<String?> _redirectLogic(BuildContext context, GoRouterState state) {
-    final bool isAuthenticated = authProvider.isAuthenticated;
+    final bool isAuthenticated = authProvider.isCalendarLinked;
     final bool isLoading = authProvider.isLoading;
     const String loginLocation = '/login';
     const String homeLocation = '/chat';

@@ -240,7 +240,7 @@ class AuthProvider with ChangeNotifier {
       // _user = User(id: 'some_user_id_from_backend'); // Or however you manage user state
       _isCalendarLinked = isCalendarLinked;
       _currentUserUuid = currentUserUuid;
-      notifyListeners(); // This is crucial to trigger GoRouter's refreshListenable
+      //notifyListeners(); // This is crucial to trigger GoRouter's refreshListenable
   }
 
   Future<void> saveBackendAuth({

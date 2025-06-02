@@ -44,6 +44,7 @@ class _LoginScreenState extends State<LoginScreen> {
           expiresIn: expires,
           userId: userId,
         );
+        authProvider.updateUserGoogleCalendarLinkStatus(isCalendarLinked: true, currentUserUuid: userId);
       }
 
       if (context.mounted) {
