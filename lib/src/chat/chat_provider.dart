@@ -275,7 +275,7 @@ class ChatProvider with ChangeNotifier {
     _messages.insert(0, assistantLoadingMessage);
     notifyListeners();
 
-    final uploadService = AudioUploadService(authProvider: _chatService.authProvider);
+    final uploadService = AudioUploadService();
     try {
       final audioUrl = await uploadService.upload(audioFile);
 
