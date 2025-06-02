@@ -26,12 +26,13 @@ class MessageInputBar extends StatelessWidget {
     void addMicButton() {
       if (onMicPressed != null) {
         children.add(
-          IconButton(
+          Center( child: IconButton(
             icon: Icon(Icons.mic_none_outlined,
                 color: Theme.of(context).colorScheme.primary),
             onPressed: isSending ? null : onMicPressed,
-          ),
+          )),
         );
+          // Use mic icon with outline for voice input mode
       }
     }
 
@@ -96,7 +97,11 @@ class MessageInputBar extends StatelessWidget {
           top: BorderSide(color: Theme.of(context).dividerColor, width: 0.5),
         ),
       ),
-      child: Row(children: children),
+      child: inputMode == InputMode.voice ? Center( child: IconButton(
+            icon: Icon(Icons.mic_none_outlined,
+                color: Theme.of(context).colorScheme.primary),
+            onPressed: isSending ? null : onMicPressed,
+          )) : Row(children: children),
     );
   }
 }

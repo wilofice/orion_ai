@@ -106,9 +106,9 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _handleMicPressed() async {
-    await _recorder.start();
+    await _recorder.startRecording();
     final text = await _speechService.listenOnce();
-    final recordedPath = await _recorder.stop();
+    final recordedPath = await _recorder.stopRecording();
     if (text == null || text.trim().isEmpty || recordedPath == null) {
       return;
     }
@@ -139,7 +139,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _textController.dispose();
     _scrollController.dispose();
     _speechService.stop();
-    _recorder.stop();
+    _recorder.stopRecording();
     super.dispose();
   }
 

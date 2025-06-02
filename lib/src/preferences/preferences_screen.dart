@@ -89,7 +89,7 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                       }
                     },
                   ),
-                  if (prefs.inputMode == InputMode.both)
+                  if (prefs.inputMode == InputMode.both || prefs.inputMode == InputMode.voice)
                     ListTile(
                       title: const Text('Voice Button Position'),
                       subtitle: Text(prefs.voiceButtonPosition.name),
@@ -114,6 +114,30 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                         }
                       },
                     ),
+                  ListTile(
+                    title: const Text('Voice Button Position'),
+                    subtitle: Text(prefs.voiceButtonPosition.name),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () async {
+                      final selected = await showDialog<VoiceButtonPosition>(
+                        context: context,
+                        builder: (context) => SimpleDialog(
+                          title: const Text('Select Button Position'),
+                          children: VoiceButtonPosition.values
+                              .map((p) => SimpleDialogOption(
+                                    onPressed: () => Navigator.pop(context, p),
+                                    child: Text(p.name),
+                                  ))
+                              .toList(),
+                        ),
+                      );
+                      if (selected != null) {
+                        prefsProvider.updatePreferences(
+                          prefs.copyWith(voiceButtonPosition: selected),
+                        );
+                      }
+                    },
+                  ),
                   ListTile(
                     title: const Text('Time Zone'),
                     subtitle: Text(prefs.timeZone.isEmpty ? 'Select' : prefs.timeZone),

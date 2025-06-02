@@ -76,7 +76,7 @@ class PreferenceService {
               workBlockMaxDurationMinutes: 0,
               createdAt: 0,
               updatedAt: 0,
-              darkMode: true,
+              darkMode: false,
               inputMode: InputMode.text,
               voiceButtonPosition: VoiceButtonPosition.right
             );
