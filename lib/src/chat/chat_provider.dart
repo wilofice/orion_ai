@@ -85,6 +85,11 @@ class ChatProvider with ChangeNotifier {
         }).toList().reversed.toList();
       }
       _historyLoaded = true;
+    } on ChatServiceError catch (e) {
+      debugPrint('ChatProvider: Failed to load conversations - ${e.message}');
+      if (e.statusCode == 401) {
+        await _chatService.authProvider.clearBackendAuth();
+      }
     } catch (e) {
       debugPrint('ChatProvider: Failed to load conversations - $e');
     } finally {
@@ -187,6 +192,9 @@ class ChatProvider with ChangeNotifier {
 
     } on ChatServiceError catch (e) {
       debugPrint('ChatProvider: ChatServiceError - ${e.message}');
+      if (e.statusCode == 401) {
+        await _chatService.authProvider.clearBackendAuth();
+      }
       _errorMessage = e.message;
       // Update the loading message to show error status
       final loadingIndex = _messages.indexWhere((msg) => msg.id == assistantLoadingMessageId);
@@ -294,6 +302,22 @@ class ChatProvider with ChangeNotifier {
                   response.status == BackendResponseStatus.needs_clarification
               ? MessageStatus.sent
               : MessageStatus.error,
+        );
+      }
+    } on ChatServiceError catch (e) {
+      debugPrint('ChatProvider: sendAudioMessage ChatServiceError - ${e.message}');
+      if (e.statusCode == 401) {
+        await _chatService.authProvider.clearBackendAuth();
+      }
+      _errorMessage = e.message;
+      final loadingIndex = _messages.indexWhere((msg) => msg.id == assistantLoadingMessageId);
+      if (loadingIndex != -1) {
+        _messages[loadingIndex] = ChatMessage(
+          id: assistantLoadingMessageId,
+          text: '',
+          sender: MessageSender.assistant,
+          timestamp: _messages[loadingIndex].timestamp,
+          status: MessageStatus.error,
         );
       }
     } catch (e) {

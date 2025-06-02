@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // For date formatting (add intl to pubspec.yaml)
+import 'package:flutter_linkify/flutter_linkify.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // Define a model for chat messages (can be moved to a dedicated models file later)
 enum MessageSender { user, assistant }
@@ -72,9 +74,19 @@ class ChatMessageBubble extends StatelessWidget {
         ));
         parts.add(const SizedBox(height: 4));
       }
-      parts.add(Text(
-        message.text,
+      parts.add(Linkify(
+        text: message.text,
+        onOpen: (link) async {
+          final uri = Uri.parse(link.url);
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+          }
+        },
         style: TextStyle(color: textColor, fontSize: 16),
+        linkStyle: const TextStyle(
+          color: Colors.blueAccent,
+          decoration: TextDecoration.underline,
+        ),
       ));
       messageContent = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
