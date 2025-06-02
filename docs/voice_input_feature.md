@@ -17,11 +17,12 @@ device.
 
 ## Chosen Solution
 
-The repository already expects text prompts. Using client-side speech
-recognition keeps the API simple while giving users quick feedback. The
-`speech_to_text` package is widely used and works on both Android and iOS.
-Therefore the implementation in this pull request adds `speech_to_text` as a
-dependency and provides a small `SpeechService` wrapper.
+Voice messages are now recorded on device and uploaded to Amazon S3. During the
+recording the `speech_to_text` package transcribes the audio locally. After the
+file is uploaded, the transcript together with the resulting S3 URL is sent to
+the backend `/chat/prompt` route. The backend stores both pieces so that the
+conversation history can later show the audio clip along with its text
+representation.
 
 ## Customisation
 
@@ -40,6 +41,6 @@ reads these settings and adapts its layout.
    cancelling recording.
 2. **Handle long recordings** – Automatically stop after a timeout or when the
    user pauses.
-3. **Backend support for audio** *(optional)* – If higher quality is needed,
-   split the work into backend upload, storage, and transcription steps.
+3. **Audio playback UI** – Provide controls to play back recorded clips inside
+   the conversation history.
 

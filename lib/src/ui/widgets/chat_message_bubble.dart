@@ -10,6 +10,7 @@ class ChatMessage {
   final String text;
   final MessageSender sender;
   final DateTime timestamp;
+  final String? audioUrl;
   final MessageStatus? status; // For UI feedback on user messages or assistant loading
 
   ChatMessage({
@@ -17,6 +18,7 @@ class ChatMessage {
     required this.text,
     required this.sender,
     required this.timestamp,
+    this.audioUrl,
     this.status,
   });
 }
@@ -59,9 +61,24 @@ class ChatMessageBubble extends StatelessWidget {
         ),
       );
     } else {
-      messageContent = Text(
+      final parts = <Widget>[];
+      if (message.audioUrl != null) {
+        parts.add(Row(
+          children: [
+            const Icon(Icons.play_arrow, size: 16),
+            const SizedBox(width: 4),
+            Text('Audio', style: TextStyle(color: textColor)),
+          ],
+        ));
+        parts.add(const SizedBox(height: 4));
+      }
+      parts.add(Text(
         message.text,
         style: TextStyle(color: textColor, fontSize: 16),
+      ));
+      messageContent = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: parts,
       );
     }
 
