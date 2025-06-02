@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../chat/chat_screen.dart'; // Adjust path
 import '../events/event_list_screen.dart'; // Adjust path
-import './../preferences/preferences_screen.dart'; // Adjust path
+import './../preferences/parameters_screen.dart'; // Adjust path
 
 class MainTabsScreen extends StatefulWidget {
   final StatefulNavigationShell navigationShell; // Provided by GoRouter for nested navigation
@@ -45,7 +45,7 @@ class _MainTabsScreenState extends State<MainTabsScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.settings_outlined),
             activeIcon: Icon(Icons.settings),
-            label: 'Preferences',
+            label: 'Parameters',
           ),
         ],
         currentIndex: widget.navigationShell.currentIndex,
