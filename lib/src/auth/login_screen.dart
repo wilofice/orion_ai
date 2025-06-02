@@ -2,8 +2,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
+
 // Import your AuthProvider
 import 'auth_provider.dart'; // Adjust path as needed
+import 'google_oauth_service.dart';
 // Optional: For a dedicated Google Sign-In button style, you might use a package
 // or create a custom styled button. For this example, we'll use ElevatedButton.
 
@@ -21,33 +24,36 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // --- Step 5.4 & 5.3: Implement handleSignIn function ---
   Future<void> _handleSignIn(BuildContext context) async {
-    // Access the AuthProvider
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-    if (authProvider.isLoading || _isSigningIn) return; // Prevent double taps
+    if (_isSigningIn) return;
 
     setState(() {
       _isSigningIn = true;
     });
 
     try {
-      print('LoginScreen: Initiating sign-in...');
-      await authProvider.signInWithGoogle();
-      // On successful sign-in, the AuthProvider's state will change,
-      // and the AuthGate/RootNavigator (from FE-TASK-7) will navigate away.
-      // So, no explicit navigation here.
-      print('LoginScreen: signInWithGoogle call completed.');
-      // If navigation doesn't happen immediately due to listener delays,
-      // _isSigningIn will be reset by the widget rebuilding or unmounting.
+      final result = await GoogleOAuthService.signInWithGoogle(context);
+      final accessToken = result['access_token'] as String?;
+      final userId = result['user_id'] as String?;
+      final expires = result['expires_in'] as int? ?? 0;
+
+      if (accessToken != null && userId != null) {
+        await authProvider.saveBackendAuth(
+          accessToken: accessToken,
+          expiresIn: expires,
+          userId: userId,
+        );
+      }
+
+      if (context.mounted) {
+        context.go('/chat');
+      }
     } catch (e) {
-      // Errors are typically handled and set within AuthProvider.
-      // We can show a SnackBar here for immediate feedback if AuthProvider doesn't.
-      // However, it's better to rely on AuthProvider.errorMessage for consistency.
-      print('LoginScreen: Error during signInWithGoogle call: $e');
-      if (mounted) { // Check if the widget is still in the tree
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(authProvider.errorMessage ?? 'Sign-in failed. Please try again.'),
+            content: Text('Sign-in failed: $e'),
             backgroundColor: Colors.red,
           ),
         );

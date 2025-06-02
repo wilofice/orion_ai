@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../services/connectivity_service.dart';
 import 'preferences_provider.dart';
 import 'user_preferences.dart';
+import '../auth/auth_provider.dart';
+import 'package:go_router/go_router.dart';
 
 const List<String> _timeZones = [
   'UTC',
@@ -12,14 +14,14 @@ const List<String> _timeZones = [
   'Asia/Tokyo'
 ];
 
-class PreferencesScreen extends StatefulWidget {
-  const PreferencesScreen({super.key});
+class ParametersScreen extends StatefulWidget {
+  const ParametersScreen({super.key});
 
   @override
-  State<PreferencesScreen> createState() => _PreferencesScreenState();
+  State<ParametersScreen> createState() => _ParametersScreenState();
 }
 
-class _PreferencesScreenState extends State<PreferencesScreen> {
+class _ParametersScreenState extends State<ParametersScreen> {
   @override
   void initState() {
     super.initState();
@@ -35,7 +37,7 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
     final prefs = prefsProvider.preferences;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Orion Preferences')),
+      appBar: AppBar(title: const Text('Orion Parameters')),
       body: Column(
         children: [
           if (!connectivity.isOnline)
@@ -172,6 +174,12 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                     ListTile(
                       title: const Text('Days Off'),
                       subtitle: Text(prefs.daysOff.join(', ')),
+                    ),
+                  const SizedBox(height: 20),
+                  if (!context.watch<AuthProvider>().isAuthenticated)
+                    ElevatedButton(
+                      onPressed: () => context.go('/login'),
+                      child: const Text('Login'),
                     ),
                 ],
               ),
