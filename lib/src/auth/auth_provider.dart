@@ -5,6 +5,7 @@ import 'package:flutter/material.dart'; // For ChangeNotifier
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth; // Alias to avoid name clash
 import 'package:google_sign_in/google_sign_in.dart';
 import '../services/token_storage.dart';
+import '../services/user_service.dart';
 // For FirebaseException
 // import 'package:firebase_analytics/firebase_analytics.dart'; // For logging events
 
@@ -111,7 +112,13 @@ class AuthProvider with ChangeNotifier {
     _backendTokenExpiry = await _tokenStorage.readExpiry();
     _currentUserUuid = await _tokenStorage.readUserId() ?? '';
     if (_backendAccessToken != null) {
-      _isCalendarLinked = true;
+      final service = UserService(authProvider: this);
+      final valid = await service.verifyToken();
+      if (valid) {
+        _isCalendarLinked = true;
+      } else {
+        await clearBackendAuth();
+      }
     }
     notifyListeners();
   }

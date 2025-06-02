@@ -92,6 +92,8 @@ dependencies:
 
   provider: any
   flutter_dotenv: any
+  flutter_linkify: any
+  url_launcher: any
 dev_dependencies:
   flutter_test:
     sdk: flutter
