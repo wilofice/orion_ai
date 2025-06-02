@@ -1,6 +1,6 @@
 enum InputMode { text, voice, both }
 
-enum VoiceButtonPosition { left, center, right }
+enum VoiceButtonPosition { left, right }
 
 class TimeWindow {
   final String start;
