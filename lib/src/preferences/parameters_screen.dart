@@ -152,7 +152,7 @@ class _ParametersScreenState extends State<ParametersScreen> {
                       subtitle: Text(prefs.daysOff.join(', ')),
                     ),
                   const SizedBox(height: 20),
-                  if (context.watch<AuthProvider>().isAuthenticated)
+                  if (context.watch<AuthProvider>().isCalendarLinked)
                     ElevatedButton(
                       onPressed: () async {
                         await context.read<AuthProvider>().signOut();

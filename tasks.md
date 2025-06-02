@@ -9,3 +9,4 @@ For this feature , do a study of possible solutions of implementations. Choose t
 3) In parameters_screen.dart, there is a login button. That is not we wanted to do. Instead we want to implement a sign off button to logout from the and return to the login page. Do that;
 
 4) In parameters_screen.dart, if input mode is text, the option "voice input position" should not be displayed. Implemented
+5) On login, we need to check in case if the user has already linked his calendar, we need to make sure that he is still authenticated (that the token has not eexpired) by calling backend api using route "/me". We also need to make sure the when the user is already on the chat screen and send the message and the api send "not autorized" response, that the user is forced to re login again;
