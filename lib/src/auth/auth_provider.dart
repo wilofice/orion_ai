@@ -205,11 +205,12 @@ class AuthProvider with ChangeNotifier {
       // print('AuthProvider: Logged logout event to Firebase Analytics.');
 
       // Auth state listener will update _currentUser to null and _isLoading = false
-      // _currentUser = null; // Handled by listener
-      // _googleIdToken = null; // Handled by listener
-      // _googleAccessToken = null; // Handled by listener
-      // _isLoading = false; // Handled by listener
-      // _errorMessage = null; // Handled by listener
+      _currentUser = null; // Handled by listener
+      _googleIdToken = null; // Handled by listener
+      _googleAccessToken = null; // Handled by listener
+      _isLoading = false; // Handled by listener
+      _errorMessage = null; // Handled by listener
+      await clearBackendAuth(); // Reset calendar link status
       // notifyListeners(); // Listener will notify
 
     } catch (e) {
