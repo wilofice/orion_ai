@@ -91,7 +91,7 @@ class _ParametersScreenState extends State<ParametersScreen> {
                       }
                     },
                   ),
-                  if (prefs.inputMode == InputMode.both || prefs.inputMode == InputMode.voice)
+                  if (prefs.inputMode != InputMode.text)
                     ListTile(
                       title: const Text('Voice Button Position'),
                       subtitle: Text(prefs.voiceButtonPosition.name),
@@ -152,10 +152,16 @@ class _ParametersScreenState extends State<ParametersScreen> {
                       subtitle: Text(prefs.daysOff.join(', ')),
                     ),
                   const SizedBox(height: 20),
-                  if (!context.watch<AuthProvider>().isAuthenticated)
+                  if (context.watch<AuthProvider>().isAuthenticated)
                     ElevatedButton(
-                      onPressed: () => context.go('/login'),
-                      child: const Text('Login'),
+                      onPressed: () async {
+                        await context.read<AuthProvider>().signOut();
+                        await context.read<AuthProvider>().clearBackendAuth();
+                        if (mounted) {
+                          context.go('/login');
+                        }
+                      },
+                      child: const Text('Sign Out'),
                     ),
                 ],
               ),
