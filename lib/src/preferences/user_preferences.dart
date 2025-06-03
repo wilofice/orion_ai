@@ -2,6 +2,8 @@ enum InputMode { text, voice, both }
 
 enum VoiceButtonPosition { left, right }
 
+const List<String> supportedLanguages = ['en', 'fr', 'de', 'es'];
+
 class TimeWindow {
   final String start;
   final String end;
@@ -34,6 +36,7 @@ class UserPreferences {
   final bool darkMode;
   final InputMode inputMode;
   final VoiceButtonPosition voiceButtonPosition;
+  final String language;
 
   UserPreferences({
     required this.userId,
@@ -48,6 +51,7 @@ class UserPreferences {
     this.darkMode = false,
     this.inputMode = InputMode.text,
     this.voiceButtonPosition = VoiceButtonPosition.right,
+    this.language = 'en',
   });
 
   factory UserPreferences.fromJson(Map<String, dynamic> json) {
@@ -81,6 +85,7 @@ class UserPreferences {
       voiceButtonPosition: VoiceButtonPosition.values.firstWhere(
           (e) => e.name == (json['voice_button_position'] as String?),
           orElse: () => VoiceButtonPosition.right),
+      language: json['language'] as String? ?? 'en',
     );
   }
 
@@ -96,6 +101,7 @@ class UserPreferences {
         'work_block_max_duration_minutes': workBlockMaxDurationMinutes,
         'input_mode': inputMode.name,
         'voice_button_position': voiceButtonPosition.name,
+        'language': language,
       };
 
   Map<String, dynamic> toJson() => {
@@ -103,6 +109,7 @@ class UserPreferences {
         'created_at': createdAt,
         'updated_at': updatedAt,
         'darkMode': darkMode,
+        'language': language,
       };
 
   UserPreferences copyWith({
@@ -110,6 +117,7 @@ class UserPreferences {
     String? timeZone,
     InputMode? inputMode,
     VoiceButtonPosition? voiceButtonPosition,
+    String? language,
   }) {
     return UserPreferences(
       userId: userId,
@@ -124,6 +132,7 @@ class UserPreferences {
       darkMode: darkMode ?? this.darkMode,
       inputMode: inputMode ?? this.inputMode,
       voiceButtonPosition: voiceButtonPosition ?? this.voiceButtonPosition,
+      language: language ?? this.language,
     );
   }
 }
