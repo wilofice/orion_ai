@@ -18,3 +18,5 @@ The audio file  identifier in S3 (url or id) must be sent in the body when sendi
 5) ~~On login, we need to check in case if the user has already linked his calendar, we need to make sure that he is still authenticated (that the token has not eexpired) by calling backend api using route "/me". We also need to make sure the when the user is already on the chat screen and send the message and the api send "not autorized" response, that the user is forced to re login again;~~
    - **Implemented**: token validity is verified on startup via `/auth/me`. Unauthorized responses from the API trigger a logout and redirect to the login screen.
 6) Google custom scheme in google_auth_service.dart should not be hard coded. Move all of them to .env file
+
+7) Add language preferences in the parameters screen
