@@ -18,12 +18,12 @@ class GoogleOAuthService {
   static final String googleClientIdAndroid =
       dotenv.env['GOOGLE_CLIENT_ID_ANDROID'] ?? '';
 
-  static const String customUriSchemeIos =
-      'com.googleusercontent.apps.242901186197-k0kflho05ctojg9da4vuvf88fe7c6d1b';
-  static const String customUriSchemeAndroid =
-      'com.googleusercontent.apps.242901186197-b59i14n5oodp6e54t5iptcl1j1d91ql8';
-  static const String redirectUriIos = '$customUriSchemeIos:/oauth2redirect';
-  static const String redirectUriAndroid =
+  static String get customUriSchemeIos =>
+      AppConfig.googleCustomSchemeIos;
+  static String get customUriSchemeAndroid =>
+      AppConfig.googleCustomSchemeAndroid;
+  static String get redirectUriIos => '$customUriSchemeIos:/oauth2redirect';
+  static String get redirectUriAndroid =>
       '$customUriSchemeAndroid:/oauth2redirect';
 
   static const List<String> googleScopes = [

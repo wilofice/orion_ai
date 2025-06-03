@@ -1,53 +1,79 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
-
-import '../auth/auth_provider.dart';
 import '../config.dart';
 
 class AudioUploadService {
   final http.Client _client;
-  final AuthProvider _authProvider;
 
-  AudioUploadService({http.Client? client, required AuthProvider authProvider})
-      : _client = client ?? http.Client(),
-        _authProvider = authProvider;
+  AudioUploadService({http.Client? client}) : _client = client ?? http.Client();
 
   Future<String> upload(File file) async {
-    final token = _authProvider.backendAccessToken;
-    if (token == null) {
-      throw Exception('Not authenticated');
+    final region = AppConfig.awsRegion;
+    final bucket = AppConfig.awsBucket;
+    final accessKey = AppConfig.awsAccessKey;
+    final secretKey = AppConfig.awsSecretKey;
+    if (bucket.isEmpty || accessKey.isEmpty || secretKey.isEmpty) {
+      throw Exception('AWS S3 configuration is missing');
     }
-
-    final name = file.uri.pathSegments.last;
-    final presignRes = await _client.post(
-      Uri.parse('${AppConfig.backendApiBaseUrl}/media/presign'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({'file_name': name}),
-    );
-
-    if (presignRes.statusCode != 200) {
-      throw Exception('Failed to obtain upload url');
-    }
-    final presignBody = jsonDecode(presignRes.body) as Map<String, dynamic>;
-    final url = presignBody['url'] as String?;
-    if (url == null) throw Exception('No url returned');
 
     final bytes = await file.readAsBytes();
-    final uploadRes = await _client.put(
-      Uri.parse(url),
-      headers: {'Content-Type': 'audio/m4a'},
-      body: bytes,
-    );
+    final key =
+        'recordings/${DateTime.now().millisecondsSinceEpoch}_${file.uri.pathSegments.last}';
+    final host = '$bucket.s3.$region.amazonaws.com';
+    final iso8601 = _formatTimestamp(DateTime.now().toUtc());
+    final isoDate = iso8601.substring(0, 8);
 
-    if (uploadRes.statusCode < 200 || uploadRes.statusCode >= 300) {
-      throw Exception('Upload failed');
+    final payloadHash = sha256.convert(bytes).toString();
+    final canonicalHeaders =
+        'host:$host\n' 'x-amz-content-sha256:$payloadHash\n' 'x-amz-date:$iso8601\n';
+    const signedHeaders = 'host;x-amz-content-sha256;x-amz-date';
+    final canonicalRequest =
+        'PUT\n/$key\n\n$canonicalHeaders\n$signedHeaders\n$payloadHash';
+    final credentialScope = '$isoDate/$region/s3/aws4_request';
+    final stringToSign = 'AWS4-HMAC-SHA256\n$iso8601\n$credentialScope\n'
+        '${sha256.convert(utf8.encode(canonicalRequest)).toString()}';
+    final signingKey = _signingKey(secretKey, isoDate, region, 's3');
+    final signature = Hmac(sha256, signingKey)
+        .convert(utf8.encode(stringToSign))
+        .toString();
+    final authorization =
+        'AWS4-HMAC-SHA256 Credential=$accessKey/$credentialScope, SignedHeaders=$signedHeaders, Signature=$signature';
+
+    final uri = Uri.https(host, '/$key');
+    final response = await _client.put(uri,
+        headers: {
+          'Authorization': authorization,
+          'x-amz-date': iso8601,
+          'x-amz-content-sha256': payloadHash,
+          'Content-Type': 'audio/m4a',
+        },
+        body: bytes);
+    if (response.statusCode == 200) {
+      return 'https://$host/$key';
+    } else {
+      throw Exception('S3 upload failed: ${response.statusCode}');
     }
+  }
 
-    return url.split('?').first;
+  String _formatTimestamp(DateTime dt) {
+    final y = dt.year.toString().padLeft(4, '0');
+    final m = dt.month.toString().padLeft(2, '0');
+    final d = dt.day.toString().padLeft(2, '0');
+    final h = dt.hour.toString().padLeft(2, '0');
+    final min = dt.minute.toString().padLeft(2, '0');
+    final s = dt.second.toString().padLeft(2, '0');
+    return '${y}${m}${d}T${h}${min}${s}Z';
+  }
+
+  List<int> _signingKey(String secretKey, String date, String region, String service) {
+    final kDate = Hmac(sha256, utf8.encode('AWS4$secretKey')).convert(utf8.encode(date)).bytes;
+    final kRegion = Hmac(sha256, kDate).convert(utf8.encode(region)).bytes;
+    final kService = Hmac(sha256, kRegion).convert(utf8.encode(service)).bytes;
+    final kSigning = Hmac(sha256, kService).convert(utf8.encode('aws4_request')).bytes;
+    return kSigning;
   }
 }

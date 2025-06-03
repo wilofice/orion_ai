@@ -24,6 +24,15 @@ the backend `/chat/prompt` route. The backend stores both pieces so that the
 conversation history can later show the audio clip along with its text
 representation.
 
+The upload service uses credentials defined in `.env`:
+
+- `AWS_S3_REGION`
+- `AWS_S3_BUCKET`
+- `AWS_ACCESS_KEY`
+- `AWS_SECRET_KEY`
+
+Make sure these values are set before running the app.
+
 ## Customisation
 
 Two new preferences are introduced:

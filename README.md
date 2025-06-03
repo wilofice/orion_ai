@@ -18,3 +18,22 @@ samples, guidance on mobile development, and a full API reference.
 ## Documentation
 
 - [Handling links in chat messages](docs/link_handling.md)
+- [Voice input feature](docs/voice_input_feature.md)
+
+## Environment Configuration
+
+Create a `.env` file based on the template below:
+
+```
+GOOGLE_CLIENT_ID_IOS=...
+GOOGLE_CLIENT_ID_ANDROID=...
+GOOGLE_CUSTOM_SCHEME_IOS=...
+GOOGLE_CUSTOM_SCHEME_ANDROID=...
+BACKEND_API_BASE_URL=http://<backend-url>
+AWS_S3_REGION=us-east-1
+AWS_S3_BUCKET=<your-bucket>
+AWS_ACCESS_KEY=<your-access-key>
+AWS_SECRET_KEY=<your-secret-key>
+```
+
+These values are loaded at runtime to configure Google OAuth and the S3 upload service.
