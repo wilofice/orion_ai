@@ -14,6 +14,13 @@ const List<String> _timeZones = [
   'Asia/Tokyo'
 ];
 
+const Map<String, String> _languages = {
+  'en': 'English',
+  'fr': 'French',
+  'de': 'German',
+  'es': 'Spanish',
+};
+
 class ParametersScreen extends StatefulWidget {
   const ParametersScreen({super.key});
 
@@ -90,7 +97,7 @@ class _ParametersScreenState extends State<ParametersScreen> {
                         );
                       }
                     },
-                  ),
+                    ),
                   if (prefs.inputMode != InputMode.text)
                     ListTile(
                       title: const Text('Voice Button Position'),
@@ -116,6 +123,33 @@ class _ParametersScreenState extends State<ParametersScreen> {
                         }
                       },
                     ),
+                  ListTile(
+                    title: const Text('Language'),
+                    subtitle:
+                        Text(_languages[prefs.language] ?? prefs.language),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () async {
+                      final selected = await showDialog<String>(
+                        context: context,
+                        builder: (context) => SimpleDialog(
+                          title: const Text('Select Language'),
+                          children: _languages.entries
+                              .map(
+                                (e) => SimpleDialogOption(
+                                  onPressed: () => Navigator.pop(context, e.key),
+                                  child: Text(e.value),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      );
+                      if (selected != null) {
+                        prefsProvider.updatePreferences(
+                          prefs.copyWith(language: selected),
+                        );
+                      }
+                    },
+                  ),
                   ListTile(
                     title: const Text('Time Zone'),
                     subtitle: Text(prefs.timeZone.isEmpty ? 'Select' : prefs.timeZone),

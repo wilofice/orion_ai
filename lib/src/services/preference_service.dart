@@ -49,6 +49,7 @@ class PreferenceService {
               updatedAt: 0,
               inputMode: InputMode.text,
               voiceButtonPosition: VoiceButtonPosition.right,
+              language: 'en',
             );
     }
 
@@ -78,7 +79,8 @@ class PreferenceService {
               updatedAt: 0,
               darkMode: false,
               inputMode: InputMode.text,
-              voiceButtonPosition: VoiceButtonPosition.right
+              voiceButtonPosition: VoiceButtonPosition.right,
+              language: 'en'
             );
   }
 

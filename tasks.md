@@ -19,4 +19,7 @@ The audio file  identifier in S3 (url or id) must be sent in the body when sendi
    - **Implemented**: token validity is verified on startup via `/auth/me`. Unauthorized responses from the API trigger a logout and redirect to the login screen.
 6) Google custom scheme in google_auth_service.dart should not be hard coded. Move all of them to .env file
 
-7) Add language preferences in the parameters screen
+7) ~~Add language preferences in the parameters screen~~
+   - **Implemented**: users can now choose a preferred UI language from English,
+     French, German or Spanish in the Parameters screen. The chosen code is
+     stored in user preferences.
