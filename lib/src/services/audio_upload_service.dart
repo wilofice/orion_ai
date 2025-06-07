@@ -16,8 +16,15 @@ class AudioUploadService {
     final bucket = AppConfig.awsBucket;
     final accessKey = AppConfig.awsAccessKey;
     final secretKey = AppConfig.awsSecretKey;
+    final sessionToken = AppConfig.awsSessionToken;
+    
     if (bucket.isEmpty || accessKey.isEmpty || secretKey.isEmpty) {
       throw Exception('AWS S3 configuration is missing');
+    }
+    
+    // Check if temporary credentials are being used
+    if (accessKey.startsWith('ASIA') && sessionToken.isEmpty) {
+      throw Exception('AWS Session Token is required for temporary credentials');
     }
 
     final bytes = await file.readAsBytes();
@@ -28,9 +35,12 @@ class AudioUploadService {
     final isoDate = iso8601.substring(0, 8);
 
     final payloadHash = sha256.convert(bytes).toString();
-    final canonicalHeaders =
-        'host:$host\n' 'x-amz-content-sha256:$payloadHash\n' 'x-amz-date:$iso8601\n';
-    const signedHeaders = 'host;x-amz-content-sha256;x-amz-date';
+    final canonicalHeaders = sessionToken.isNotEmpty
+        ? 'host:$host\n' 'x-amz-content-sha256:$payloadHash\n' 'x-amz-date:$iso8601\n' 'x-amz-security-token:$sessionToken\n'
+        : 'host:$host\n' 'x-amz-content-sha256:$payloadHash\n' 'x-amz-date:$iso8601\n';
+    final signedHeaders = sessionToken.isNotEmpty
+        ? 'host;x-amz-content-sha256;x-amz-date;x-amz-security-token'
+        : 'host;x-amz-content-sha256;x-amz-date';
     final canonicalRequest =
         'PUT\n/$key\n\n$canonicalHeaders\n$signedHeaders\n$payloadHash';
     final credentialScope = '$isoDate/$region/s3/aws4_request';
@@ -44,18 +54,24 @@ class AudioUploadService {
         'AWS4-HMAC-SHA256 Credential=$accessKey/$credentialScope, SignedHeaders=$signedHeaders, Signature=$signature';
 
     final uri = Uri.https(host, '/$key');
-    final response = await _client.put(uri,
-        headers: {
-          'Authorization': authorization,
-          'x-amz-date': iso8601,
-          'x-amz-content-sha256': payloadHash,
-          'Content-Type': 'audio/m4a',
-        },
-        body: bytes);
-    if (response.statusCode == 200) {
+    final headers = {
+      'Authorization': authorization,
+      'x-amz-date': iso8601,
+      'x-amz-content-sha256': payloadHash,
+      'Content-Type': 'audio/m4a',
+      'Content-Length': bytes.length.toString(),
+    };
+    
+    if (sessionToken.isNotEmpty) {
+      headers['x-amz-security-token'] = sessionToken;
+    }
+    
+    final response = await _client.put(uri, headers: headers, body: bytes);
+    if (response.statusCode == 200 || response.statusCode == 201) {
       return 'https://$host/$key';
     } else {
-      throw Exception('S3 upload failed: ${response.statusCode}');
+      final errorBody = response.body.isNotEmpty ? response.body : 'No error details';
+      throw Exception('S3 upload failed: ${response.statusCode} - $errorBody');
     }
   }
 

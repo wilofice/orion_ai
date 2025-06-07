@@ -17,10 +17,52 @@ The audio file  identifier in S3 (url or id) must be sent in the body when sendi
 
 7) Add language preferences in the parameters screen
 
-8) Very important feature : We want the user to be able to use the voice to send message to AI (via the backend) like Whatsapp when you send an audio message to a friend.  
-For this feature , analyse the current implementations. 
-- There is currently a bug when recording voice in the chat screen. It seems that the voice is correctly detected and the voice is translated when I look at the logs in Xcode. But The voice is never send to the Aws S3 bucket. 
-- Initially we were sending the voice ID to the backend when prompting the model on the backend side. Because we want the backend to save the audio Id in the conversations model in order to return it later to the front when displayed previous conversations at login. THe goal is to allow the front to always display a playable audio file for each audio message (and not the transcript of the audio). Check if that implementation is workiing if not fix it. The backend doesn't need to have the audio file itself only the url of the audio for later returning that information back to the front when the prevous messages/conversations are displayed. So it means that each time, the front is displaying the conversations, if the conversation at a turn contains an audio, we can now it by checking if there is a not empty audio url on the conversation (send by the backend). In that case, the front should display a playable audio file by retrieving the audio from aws s3 bucket.  
-Analyse this task. If it is too big, split in smaller tasks. Then update the tasks.md. Ask me then for confirmation and after committing I will then reprompt to get each subtask done;  
+8) Very important feature : We want the user to be able to use the voice to send message to AI (via the backend) like Whatsapp when you send an audio message to a friend.
+
+**Analysis completed**: The voice recording and transcription work correctly. Issues identified:
+- AWS S3 upload was failing due to missing session token support for temporary credentials
+- Backend integration exists but needs verification that audio URLs are preserved in conversation history
+
+**Subtasks**:
+
+8.1) Fix AWS S3 upload issues (COMPLETED)
+   - Added AWS_SESSION_TOKEN support for temporary credentials
+   - Fixed S3 status code checking (now accepts 200 and 201)
+   - Added required headers (Content-Length, x-amz-security-token)
+   - Improved error handling and user feedback
+   - **Action required**: Add AWS_SESSION_TOKEN to .env file
+
+8.2) Verify backend conversation storage
+   - Confirm backend stores audio URLs in conversation history
+   - Ensure backend returns audio URLs in the expected format:
+     ```json
+     {
+       "transcript": "user's spoken text",
+       "audio_url": "https://s3.../audio.m4a"
+     }
+     ```
+   - Test that audio URLs are preserved when loading previous conversations
+
+8.3) Implement audio playback UI
+   - Add audio player widget to ChatMessageBubble
+   - Support play/pause functionality
+   - Show playback progress
+   - Handle loading states and errors
+   - Cache audio files locally for better performance
+   - Support background audio playback
+
+8.4) Enhanced audio message features
+   - Add waveform visualization during recording
+   - Show recording duration in real-time
+   - Allow users to preview/re-record before sending
+   - Add option to send audio without transcription
+   - Implement audio message deletion from S3
+
+8.5) Testing and polish
+   - Test with various audio lengths
+   - Handle network errors gracefully
+   - Test audio playback across app lifecycle
+   - Ensure proper cleanup of temporary files
+   - Add loading indicators for audio messages  
 
 

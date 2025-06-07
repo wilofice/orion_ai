@@ -7,6 +7,7 @@ class AppConfig {
   static String get awsBucket => dotenv.env['AWS_S3_BUCKET'] ?? '';
   static String get awsAccessKey => dotenv.env['AWS_ACCESS_KEY'] ?? '';
   static String get awsSecretKey => dotenv.env['AWS_SECRET_KEY'] ?? '';
+  static String get awsSessionToken => dotenv.env['AWS_SESSION_TOKEN'] ?? '';
 
   static String get googleCustomSchemeIos =>
       dotenv.env['GOOGLE_CUSTOM_SCHEME_IOS'] ?? '';

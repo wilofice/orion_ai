@@ -63,6 +63,9 @@ dependencies:
   speech_to_text: ^7.0.0
   permission_handler: ^11.0.0
   record: ^5.0.0
+  
+  # Audio playback
+  just_audio: ^0.9.40
 
   # UUID Generator
   uuid: ^4.5.1

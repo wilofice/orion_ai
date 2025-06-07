@@ -254,13 +254,14 @@ class ChatProvider with ChangeNotifier {
     final String userMessageId = 'user-${_uuid.v4()}';
     final String assistantLoadingMessageId = 'assistant-loading-${_uuid.v4()}';
 
+    // Create initial user message without audio URL
     final userMessage = ChatMessage(
       id: userMessageId,
       text: transcript.trim(),
-      audioUrl: null,
+      audioUrl: null, // Will be updated after upload
       sender: MessageSender.user,
       timestamp: DateTime.now(),
-      status: MessageStatus.sent,
+      status: MessageStatus.sending, // Start as sending until upload completes
     );
 
     final assistantLoadingMessage = ChatMessage(
@@ -276,8 +277,24 @@ class ChatProvider with ChangeNotifier {
     notifyListeners();
 
     final uploadService = AudioUploadService();
+    String? audioUrl;
     try {
-      final audioUrl = await uploadService.upload(audioFile);
+      audioUrl = await uploadService.upload(audioFile);
+      debugPrint('ChatProvider: Audio uploaded successfully to: $audioUrl');
+      
+      // Update user message with audio URL and sent status
+      final userIndex = _messages.indexWhere((msg) => msg.id == userMessageId);
+      if (userIndex != -1) {
+        _messages[userIndex] = ChatMessage(
+          id: userMessageId,
+          text: transcript.trim(),
+          audioUrl: audioUrl,
+          sender: MessageSender.user,
+          timestamp: _messages[userIndex].timestamp,
+          status: MessageStatus.sent,
+        );
+        notifyListeners();
+      }
 
       final response = await _chatService.sendMessage(
         promptText: transcript.trim(),
@@ -322,7 +339,26 @@ class ChatProvider with ChangeNotifier {
       }
     } catch (e) {
       debugPrint('ChatProvider: sendAudioMessage error - $e');
-      _errorMessage = 'Failed to send audio message';
+      
+      // Determine if it's an upload error or a send error
+      String errorMessage = 'Failed to send audio message';
+      if (audioUrl == null) {
+        errorMessage = 'Failed to upload audio: ${e.toString()}';
+        // Update user message to show error status
+        final userIndex = _messages.indexWhere((msg) => msg.id == userMessageId);
+        if (userIndex != -1) {
+          _messages[userIndex] = ChatMessage(
+            id: userMessageId,
+            text: transcript.trim(),
+            audioUrl: null,
+            sender: MessageSender.user,
+            timestamp: _messages[userIndex].timestamp,
+            status: MessageStatus.error,
+          );
+        }
+      }
+      
+      _errorMessage = errorMessage;
       final loadingIndex = _messages.indexWhere((msg) => msg.id == assistantLoadingMessageId);
       if (loadingIndex != -1) {
         _messages[loadingIndex] = ChatMessage(

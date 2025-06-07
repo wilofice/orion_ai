@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // For date formatting (add intl to pubspec.yaml)
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'audio_player_widget.dart';
 
 // Define a model for chat messages (can be moved to a dedicated models file later)
 enum MessageSender { user, assistant }
@@ -64,34 +65,43 @@ class ChatMessageBubble extends StatelessWidget {
       );
     } else {
       final parts = <Widget>[];
-      if (message.audioUrl != null) {
-        parts.add(Row(
-          children: [
-            const Icon(Icons.play_arrow, size: 16),
-            const SizedBox(width: 4),
-            Text('Audio', style: TextStyle(color: textColor)),
-          ],
+      
+      // Add audio player if audio URL is present
+      if (message.audioUrl != null && message.audioUrl!.isNotEmpty) {
+        parts.add(AudioPlayerWidget(
+          audioUrl: message.audioUrl!,
+          isUserMessage: isUser,
         ));
-        parts.add(const SizedBox(height: 4));
+        parts.add(const SizedBox(height: 8));
       }
-      parts.add(Linkify(
-        text: message.text,
-        onOpen: (link) async {
-          final uri = Uri.parse(link.url);
-          if (await canLaunchUrl(uri)) {
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-          }
-        },
-        style: TextStyle(color: textColor, fontSize: 16),
-        linkStyle: const TextStyle(
-          color: Colors.blueAccent,
-          decoration: TextDecoration.underline,
-        ),
-      ));
-      messageContent = Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: parts,
-      );
+      
+      // Add text content if present
+      if (message.text.isNotEmpty) {
+        parts.add(Linkify(
+          text: message.text,
+          onOpen: (link) async {
+            final uri = Uri.parse(link.url);
+            if (await canLaunchUrl(uri)) {
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            }
+          },
+          style: TextStyle(color: textColor, fontSize: 16),
+          linkStyle: const TextStyle(
+            color: Colors.blueAccent,
+            decoration: TextDecoration.underline,
+          ),
+        ));
+      }
+      
+      messageContent = parts.isNotEmpty 
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: parts,
+          )
+        : Text(
+            'Audio message',
+            style: TextStyle(color: textColor.withOpacity(0.6), fontStyle: FontStyle.italic),
+          );
     }
 
     return Container(
