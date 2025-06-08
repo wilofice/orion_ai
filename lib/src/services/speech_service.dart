@@ -57,12 +57,12 @@ class SpeechService {
   }
 
   void _onError(SpeechRecognitionError error) {
-    debugPrint('SpeechService: Error occurred: ${error.errorMsg} (type: ${error.errorType})');
+    debugPrint('SpeechService: Error occurred: ${error.errorMsg} (type: ${error.errorMsg})');
     _isListening = false;
     
     // Handle different error types
     String? result;
-    switch (error.errorType) {
+    switch (error.errorMsg) {
       case 'error_speech_timeout':
         // If we have partial results, use them
         if (_currentTranscript.isNotEmpty) {
@@ -77,7 +77,7 @@ class SpeechService {
         debugPrint('SpeechService: Audio error - check microphone permissions');
         break;
       default:
-        debugPrint('SpeechService: Unknown error type: ${error.errorType}');
+        debugPrint('SpeechService: Unknown error type: ${error.errorMsg}');
     }
     
     // Complete with result (or null) if we have an active completer
