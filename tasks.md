@@ -92,3 +92,18 @@ The idea would be better with wait for the recording to end before getting the t
 We have to make a choice here; We are going to simplify the implementation. Remove the recording of the voice from the implementation. We are going to only use the speech to text service. Don't change anything else. Later we are going to re integrate the audio recording feature. 
 Keep the loading the recording ui feedback (the showDialog function call). The STOP button is still going to be useful for the user to let know that he just finished talking. In that scenario then, we are considering displaying the text transcript in the chat after the user clicked STOP; And the workflow will 
 continue as usual. We are sending the transcript to the api but without an audio URL because we are not going to save anything anymore to aws bucket S3(for the moment).  
+18) Android speech recognition has a very short timeout when the speaker pauses. The duration seems to vary by device and version of the Android OS. In the devices I've used none have  had a pause longer than 5 seconds. Unfortunately there appears to be no way to change that behaviour. 
+We are going to adapt ourselves based on that well-known behavior to provide a mechanism to allow  the speech recognition to continue for a definite longer period  even when the speaker pauses or the system stop listening on the mic. We are going to have a total target timeout (the one sent in the parameter of "startListening({Duration? timeout})" ) and we are going to make sure that we restart listening as long as the timeout is not finished;
+“Restart listening" -> it means we are going to call this method many times as necessary.
+'''
+      await _speech.listen(
+        onResult: _onResult,
+        listenFor: timeout,
+        pauseFor: const Duration(seconds: 360),
+        listenOptions: stt.SpeechListenOptions(
+          partialResults: false, cancelOnError: true, listenMode: stt.ListenMode.dictation
+        ),
+      );
+'''
+When "String? stop()" is called by the user (via the message dialog in chat_screen.dart), it must returns the concatenation of all recognized text. 
+We can know that the system paused the listening (stopped listening on the mic) only when "void _onResult(SpeechRecognitionResult result)" is called with "result.finalResult" set to true.
