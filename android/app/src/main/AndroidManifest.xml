@@ -54,5 +54,16 @@
             <data android:mimeType="text/plain"/>
         </intent>
     </queries>
+    <!-- Internet permission for network requests -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    
+    <!-- Microphone permission for audio recording and speech recognition -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    
+    <!-- Optional: For better speech recognition accuracy -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
+    
+    <!-- Optional: Bluetooth permissions for wireless microphones/headsets -->
+    <uses-permission android:name="android.permission.BLUETOOTH"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
 </manifest>
