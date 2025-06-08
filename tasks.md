@@ -65,4 +65,22 @@ The audio file  identifier in S3 (url or id) must be sent in the body when sendi
    - Ensure proper cleanup of temporary files
    - Add loading indicators for audio messages  
 
+9) Write a documentation to describe in details how the "preference_service.dart" component interacts with the backend api using the preferences endpoint "${AppConfig.backendApiBaseUrl}/preferences/$userId" . Describe api data input and output data models and how they are used. 
+
+10) We need to make sure that if the user is not authenticated and he is trying to update its preferences, that he is loggout from the application
+
+11) We need a proper check of cache state in order to wipe out the cache to avoid inconsistent data when necessary
+
+12) Handle secret in .env files very well
+ 
+13) Implement all preferences settings in the screen very well even with default values if necessary -> Needs a way to tell the user to manage its preferences for the AI to work efficiently
+
+14) Verify voice to text implementation in file "chat_screen.dart". There is a bug when calling the following three lines  at line 109,
+'''
+    await _recorder.startRecording();
+    final text = await _speechService.listenOnce();
+    final recordedPath = await _recorder.stopRecording();
+'''
+After debugging it seems that "final text = await _speechService.listenOnce();" is not doing anything . Sometimes the mobile freezes totally on that line. Or sometimes it just returns null. I am not sure it is the thing to do to call "speechService.listenOnce()". 
+The idea would be better with wait for the recording to end before getting the transcript. But stream implementation of voice recording and transcript can of course bring more performance. Choose wisely what to do here by analysing the "speech_service.dart" file
 
