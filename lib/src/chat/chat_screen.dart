@@ -8,10 +8,10 @@ import '/src/chat/chat_provider.dart'; // Adjust path
 import '/src/auth/auth_provider.dart'; // Adjust path for user ID
 import '/src/events/event_provider.dart';
 import '/src/services/speech_service.dart';
-import '/src/services/audio_recorder_service.dart';
+// import '/src/services/audio_recorder_service.dart'; // Removed since we're not using audio recording
 import '/src/preferences/preferences_provider.dart';
 import '/src/preferences/user_preferences.dart';
-import 'dart:io';
+// import 'dart:io'; // Removed since we're not using File anymore
 import 'package:provider/provider.dart';
 // Import ChatMessage model if it's defined separately, otherwise it's in chat_message_bubble.dart
 // from 'package:orion_app/src/models/chat_message.dart';
@@ -28,14 +28,14 @@ class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _isErrorSnackbarShown = false;
   late SpeechService _speechService;
-  late AudioRecorderService _recorder;
+  // late AudioRecorderService _recorder; // Removed since we're not using audio recording
 
 
   @override
   void initState() {
     super.initState();
     _speechService = SpeechService();
-    _recorder = AudioRecorderService();
+    // _recorder = AudioRecorderService(); // Removed since we're not using audio recording
     // Initial scroll if there are messages (e.g., welcome message from ChatProvider)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = context.read<AuthProvider>();
@@ -108,29 +108,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _handleMicPressed() async {
     try {
-      // Initialize the recorder if needed
-      if (!_recorder.isRecording) {
-        await _recorder.initialize();
-      }
-      
-      // Start recording audio first
-      final recordingPath = await _recorder.startRecording();
-      if (recordingPath == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to start recording'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-      
-      // Start speech recognition in parallel with recording
+      // Start speech recognition only (no audio recording)
       final transcriptFuture = _speechService.startListening(
         timeout: const Duration(seconds: 30),
       );
       
-      // Show recording UI feedback
+      // Show listening UI feedback
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -165,27 +148,23 @@ class _ChatScreenState extends State<ChatScreen> {
           );
         },
       ).then((_) async {
-        // Dialog was closed, stop recording and recognition
+        // Dialog was closed, stop speech recognition
         _speechService.stop();
-        await _recorder.stopRecording();
       });
       
       // Wait for transcription
       final text = await transcriptFuture;
-      
-      // Stop recording
-      final finalPath = await _recorder.stopRecording();
       
       // Close the dialog if still open
       if (mounted && Navigator.canPop(context)) {
         Navigator.of(context).pop();
       }
       
-      // Check if we got valid results
-      if (text == null || text.trim().isEmpty || finalPath == null) {
+      // Check if we got valid speech
+      if (text == null || text.trim().isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('No speech detected or recording failed'),
+            content: Text('No speech detected'),
             backgroundColor: Colors.orange,
           ),
         );
@@ -205,18 +184,17 @@ class _ChatScreenState extends State<ChatScreen> {
         return;
       }
 
-      chatProvider.sendAudioMessage(
-        transcript: text.trim(),
-        audioFile: File(finalPath),
+      // Send text message without audio file
+      chatProvider.sendMessage(
+        promptText: text.trim(),
         userId: authProvider.currentUserUuid,
         eventProvider: eventProvider,
       );
     } catch (e) {
       debugPrint('Error in _handleMicPressed: $e');
       
-      // Ensure recording is stopped
+      // Ensure speech recognition is stopped
       try {
-        await _recorder.stopRecording();
         _speechService.cancel();
       } catch (_) {}
       
@@ -227,7 +205,7 @@ class _ChatScreenState extends State<ChatScreen> {
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Recording failed: ${e.toString()}'),
+          content: Text('Speech recognition failed: ${e.toString()}'),
           backgroundColor: Colors.red,
         ),
       );
@@ -239,7 +217,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _textController.dispose();
     _scrollController.dispose();
     _speechService.dispose();
-    _recorder.dispose();
+    // _recorder.dispose(); // Removed since we're not using audio recording anymore
     super.dispose();
   }
 
