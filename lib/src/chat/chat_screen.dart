@@ -110,7 +110,7 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       // Start speech recognition only (no audio recording)
       final transcriptFuture = _speechService.startListening(
-        timeout: const Duration(seconds: 30),
+        timeout: const Duration(seconds: 360),
       );
       
       // Show listening UI feedback
@@ -185,9 +185,9 @@ class _ChatScreenState extends State<ChatScreen> {
       }
 
       // Send text message without audio file
-      chatProvider.sendMessage(
-        promptText: text.trim(),
-        userId: authProvider.currentUserUuid,
+      chatProvider.sendUserMessage(
+        text.trim(),
+        authProvider.currentUserUuid,
         eventProvider: eventProvider,
       );
     } catch (e) {

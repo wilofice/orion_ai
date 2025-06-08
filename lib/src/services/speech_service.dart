@@ -120,10 +120,11 @@ class SpeechService {
       // Try simple configuration first
       await _speech.listen(
         onResult: _onResult,
-        listenFor: timeout ?? const Duration(seconds: 30),
+        listenFor: timeout ?? const Duration(seconds: 360),
         pauseFor: const Duration(seconds: 3),
-        partialResults: true,
-        cancelOnError: false, // Don't cancel on errors, handle them in _onError
+        listenOptions: stt.SpeechListenOptions(
+          partialResults: false, cancelOnError: true, listenMode: stt.ListenMode.dictation
+        ),
       );
       
       debugPrint('SpeechService: Started listening with simple config');
