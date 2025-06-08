@@ -9,6 +9,10 @@ class SpeechService {
   bool _initialized = false;
   bool _isListening = false;
   String _currentTranscript = '';
+  final List<String> _transcriptSegments = [];
+  Duration? _targetTimeout;
+  DateTime? _startTime;
+  Timer? _timeoutTimer;
   
   // Stream controller for real-time transcription updates
   final _transcriptController = StreamController<String>.broadcast();
@@ -59,17 +63,8 @@ class SpeechService {
   void _onError(SpeechRecognitionError error) {
     debugPrint('SpeechService: Error occurred: ${error.errorMsg} (type: ${error.errorMsg})');
     _isListening = false;
-    
-    // Handle different error types
-    String? result;
+
     switch (error.errorMsg) {
-      case 'error_speech_timeout':
-        // If we have partial results, use them
-        if (_currentTranscript.isNotEmpty) {
-          result = _currentTranscript;
-          debugPrint('SpeechService: Using partial result after timeout: $_currentTranscript');
-        }
-        break;
       case 'error_no_match':
         debugPrint('SpeechService: No speech detected');
         break;
@@ -79,29 +74,60 @@ class SpeechService {
       default:
         debugPrint('SpeechService: Unknown error type: ${error.errorMsg}');
     }
-    
-    // Complete with result (or null) if we have an active completer
-    if (_resultCompleter != null && !_resultCompleter!.isCompleted) {
-      _resultCompleter!.complete(result);
-      _resultCompleter = null;
-    }
   }
 
   void _onResult(SpeechRecognitionResult result) {
     debugPrint('SpeechService: Result - recognized: ${result.recognizedWords}, final: ${result.finalResult}');
-    
+
     _currentTranscript = result.recognizedWords;
-    _transcriptController.add(_currentTranscript);
-    
-    if (result.finalResult && _resultCompleter != null && !_resultCompleter!.isCompleted) {
-       _resultCompleter!.complete(result.recognizedWords);
-       _resultCompleter = null;
-       stop();
-     }
+
+    // Build interim transcript for streaming
+    final interim = (_transcriptSegments + [if (!result.finalResult) _currentTranscript]).join(' ').trim();
+    _transcriptController.add(interim);
+
+    if (result.finalResult) {
+      _transcriptSegments.add(result.recognizedWords);
+      _currentTranscript = '';
+
+      final remaining = _remainingTimeout();
+      if (remaining == null || remaining > Duration.zero) {
+        // Restart listening to overcome Android pause timeout
+        _startListeningInternal(remaining);
+      } else {
+        stop();
+      }
+    }
   }
 
-  /// Starts listening for speech and returns the final transcript
-  /// This method is designed to work alongside audio recording
+  Duration? _remainingTimeout() {
+    if (_targetTimeout == null || _startTime == null) return _targetTimeout;
+    final elapsed = DateTime.now().difference(_startTime!);
+    final remaining = _targetTimeout! - elapsed;
+    return remaining.isNegative ? Duration.zero : remaining;
+  }
+
+  Future<void> _startListeningInternal(Duration? remaining) async {
+    final duration = remaining == null || remaining <= Duration.zero ? null : remaining;
+    try {
+      await _speech.listen(
+        onResult: _onResult,
+        listenFor: duration,
+        pauseFor: const Duration(seconds: 360),
+        listenOptions: stt.SpeechListenOptions(
+          partialResults: false,
+          cancelOnError: true,
+          listenMode: stt.ListenMode.dictation,
+        ),
+      );
+    } catch (e) {
+      debugPrint('SpeechService: Error starting internal listen: $e');
+    }
+  }
+
+  /// Starts listening for speech and returns the final transcript when [stop]
+  /// is called or when [timeout] is reached. On Android, listening is
+  /// automatically restarted whenever it stops due to the platform's short
+  /// pause timeout.
   Future<String?> startListening({Duration? timeout}) async {
     if (!await initialize()) {
       debugPrint('SpeechService: Cannot start listening - not initialized');
@@ -114,53 +140,45 @@ class SpeechService {
     }
     
     _currentTranscript = '';
+    _transcriptSegments.clear();
     _resultCompleter = Completer<String?>();
-    
-    try {
-      // Try simple configuration first
-      await _speech.listen(
-        onResult: _onResult,
-        listenFor: timeout,
-        pauseFor: const Duration(seconds: 360),
-        listenOptions: stt.SpeechListenOptions(
-          partialResults: false, cancelOnError: true, listenMode: stt.ListenMode.dictation
-        ),
-      );
-      
-      debugPrint('SpeechService: Started listening with simple config');
-      
-      // Set up manual timeout
-      if (timeout != null) {
-        Future.delayed(timeout, () {
-          if (_resultCompleter != null && !_resultCompleter!.isCompleted) {
-            debugPrint('SpeechService: Manual timeout reached');
-            final result = stop();
-            if (!_resultCompleter!.isCompleted) {
-              _resultCompleter!.complete(result);
-              _resultCompleter = null;
-            }
+    _targetTimeout = timeout;
+    _startTime = DateTime.now();
+
+    _timeoutTimer?.cancel();
+    if (timeout != null) {
+      _timeoutTimer = Timer(timeout, () {
+        if (_resultCompleter != null && !_resultCompleter!.isCompleted) {
+          debugPrint('SpeechService: Manual timeout reached');
+          final result = stop();
+          if (!_resultCompleter!.isCompleted) {
+            _resultCompleter!.complete(result);
           }
-        });
-      }
-      
+        }
+      });
+    }
+
+    try {
+      await _startListeningInternal(timeout);
+      debugPrint('SpeechService: Started listening with restart support');
       return _resultCompleter!.future;
     } catch (e) {
       debugPrint('SpeechService: Error starting to listen: $e');
-      
+
       // Try fallback with minimal configuration
       try {
         debugPrint('SpeechService: Trying fallback configuration');
         await _speech.listen(onResult: _onResult);
-        
-        // Simple timeout for fallback
+
         Future.delayed(const Duration(seconds: 10), () {
           if (_resultCompleter != null && !_resultCompleter!.isCompleted) {
-            stop();
-            _resultCompleter!.complete(_currentTranscript.isNotEmpty ? _currentTranscript : null);
-            _resultCompleter = null;
+            final result = stop();
+            if (!_resultCompleter!.isCompleted) {
+              _resultCompleter!.complete(result);
+            }
           }
         });
-        
+
         return _resultCompleter!.future;
       } catch (fallbackError) {
         debugPrint('SpeechService: Fallback also failed: $fallbackError');
@@ -171,25 +189,28 @@ class SpeechService {
     }
   }
 
-  /// Stops listening and returns the current transcript
+  /// Stops listening and returns the concatenated transcript of all segments
   String? stop() {
-    if (_resultCompleter == null || _resultCompleter!.isCompleted) {
-      debugPrint('SpeechService: Not currently listening or already completed');
-      return _currentTranscript.isNotEmpty ? _currentTranscript : null;
-    }
-    
+    final alreadyCompleted = _resultCompleter == null || _resultCompleter!.isCompleted;
+
     try {
+      _timeoutTimer?.cancel();
       _speech.stop();
       _isListening = false;
-      
-      // Complete the completer if it hasn't been completed yet
-      if (_resultCompleter != null && !_resultCompleter!.isCompleted) {
-        _resultCompleter!.complete(_currentTranscript.isNotEmpty ? _currentTranscript : null);
+
+      final finalTranscript = (_transcriptSegments + [_currentTranscript]).join(' ').trim();
+
+      if (!alreadyCompleted && _resultCompleter != null) {
+        _resultCompleter!.complete(finalTranscript.isNotEmpty ? finalTranscript : null);
         _resultCompleter = null;
       }
-      
-      debugPrint('SpeechService: Stopped listening. Final transcript: $_currentTranscript');
-      return _currentTranscript.isNotEmpty ? _currentTranscript : null;
+
+      debugPrint('SpeechService: Stopped listening. Final transcript: $finalTranscript');
+
+      _transcriptSegments.clear();
+      _currentTranscript = '';
+
+      return finalTranscript.isNotEmpty ? finalTranscript : null;
     } catch (e) {
       debugPrint('SpeechService: Error stopping: $e');
       return null;
@@ -202,12 +223,14 @@ class SpeechService {
       _speech.cancel();
       _isListening = false;
     }
-    
+
     if (_resultCompleter != null && !_resultCompleter!.isCompleted) {
       _resultCompleter!.complete(null);
       _resultCompleter = null;
     }
-    
+
+    _timeoutTimer?.cancel();
+    _transcriptSegments.clear();
     _currentTranscript = '';
     debugPrint('SpeechService: Cancelled');
   }
