@@ -85,3 +85,5 @@ After debugging it seems that "final text = await _speechService.listenOnce();" 
 The idea would be better with wait for the recording to end before getting the transcript. But stream implementation of voice recording and transcript can of course bring more performance. Choose wisely what to do here by analysing the "speech_service.dart" file
 
 15) Get my AndroidManisfest.xml file and check if i have required microphone permissions on it in order for the speech recording and recognition to works .
+
+16) In speech_service.dart (lines 88-119), the call to the method '_speech.listen' with its options doesn't work. I always receiving immediately "error_speech_timeout. Analyse the bug , fix it. 

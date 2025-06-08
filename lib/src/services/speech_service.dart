@@ -21,21 +21,32 @@ class SpeechService {
     if (_initialized) return true;
     
     try {
-      _initialized = await _speech.initialize(
+      // Check if speech recognition is available on this device
+      bool available = await _speech.initialize(
         onStatus: _onStatus,
         onError: _onError,
         debugLogging: kDebugMode,
+        finalTimeout: const Duration(milliseconds: 0), // Disable automatic timeout
       );
       
-      if (_initialized) {
-        debugPrint('SpeechService: Successfully initialized');
+      if (available) {
+        // Additional check for microphone permission
+        bool hasPermission = await _speech.hasPermission;
+        if (!hasPermission) {
+          debugPrint('SpeechService: No microphone permission');
+          return false;
+        }
+        
+        _initialized = true;
+        debugPrint('SpeechService: Successfully initialized with permission');
       } else {
-        debugPrint('SpeechService: Failed to initialize - speech recognition not available');
+        debugPrint('SpeechService: Speech recognition not available on this device');
       }
       
       return _initialized;
     } catch (e) {
       debugPrint('SpeechService: Error during initialization: $e');
+      _initialized = false;
       return false;
     }
   }
@@ -46,12 +57,32 @@ class SpeechService {
   }
 
   void _onError(SpeechRecognitionError error) {
-    debugPrint('SpeechService: Error occurred: ${error.errorMsg}');
+    debugPrint('SpeechService: Error occurred: ${error.errorMsg} (type: ${error.errorType})');
     _isListening = false;
     
-    // Complete with null if there's an error and we have an active completer
+    // Handle different error types
+    String? result;
+    switch (error.errorType) {
+      case 'error_speech_timeout':
+        // If we have partial results, use them
+        if (_currentTranscript.isNotEmpty) {
+          result = _currentTranscript;
+          debugPrint('SpeechService: Using partial result after timeout: $_currentTranscript');
+        }
+        break;
+      case 'error_no_match':
+        debugPrint('SpeechService: No speech detected');
+        break;
+      case 'error_audio':
+        debugPrint('SpeechService: Audio error - check microphone permissions');
+        break;
+      default:
+        debugPrint('SpeechService: Unknown error type: ${error.errorType}');
+    }
+    
+    // Complete with result (or null) if we have an active completer
     if (_resultCompleter != null && !_resultCompleter!.isCompleted) {
-      _resultCompleter!.complete(null);
+      _resultCompleter!.complete(result);
       _resultCompleter = null;
     }
   }
@@ -86,26 +117,27 @@ class SpeechService {
     _resultCompleter = Completer<String?>();
     
     try {
+      // Try simple configuration first
       await _speech.listen(
         onResult: _onResult,
         listenFor: timeout ?? const Duration(seconds: 30),
-        pauseFor: const Duration(seconds: 0),
-        localeId: null, // Use system default
-        listenOptions: stt.SpeechListenOptions(
-          partialResults: false, cancelOnError: true, listenMode: stt.ListenMode.dictation
-        ),
+        pauseFor: const Duration(seconds: 3),
+        partialResults: true,
+        cancelOnError: false, // Don't cancel on errors, handle them in _onError
       );
       
-      debugPrint('SpeechService: Started listening');
+      debugPrint('SpeechService: Started listening with simple config');
       
-      // Set up timeout
+      // Set up manual timeout
       if (timeout != null) {
         Future.delayed(timeout, () {
           if (_resultCompleter != null && !_resultCompleter!.isCompleted) {
-            debugPrint('SpeechService: Timeout reached');
-            stop();
-            _resultCompleter!.complete(_currentTranscript.isNotEmpty ? _currentTranscript : null);
-            _resultCompleter = null;
+            debugPrint('SpeechService: Manual timeout reached');
+            final result = stop();
+            if (!_resultCompleter!.isCompleted) {
+              _resultCompleter!.complete(result);
+              _resultCompleter = null;
+            }
           }
         });
       }
@@ -113,9 +145,28 @@ class SpeechService {
       return _resultCompleter!.future;
     } catch (e) {
       debugPrint('SpeechService: Error starting to listen: $e');
-      _resultCompleter?.complete(null);
-      _resultCompleter = null;
-      return null;
+      
+      // Try fallback with minimal configuration
+      try {
+        debugPrint('SpeechService: Trying fallback configuration');
+        await _speech.listen(onResult: _onResult);
+        
+        // Simple timeout for fallback
+        Future.delayed(const Duration(seconds: 10), () {
+          if (_resultCompleter != null && !_resultCompleter!.isCompleted) {
+            stop();
+            _resultCompleter!.complete(_currentTranscript.isNotEmpty ? _currentTranscript : null);
+            _resultCompleter = null;
+          }
+        });
+        
+        return _resultCompleter!.future;
+      } catch (fallbackError) {
+        debugPrint('SpeechService: Fallback also failed: $fallbackError');
+        _resultCompleter?.complete(null);
+        _resultCompleter = null;
+        return null;
+      }
     }
   }
 
