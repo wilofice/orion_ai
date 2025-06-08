@@ -120,8 +120,8 @@ class SpeechService {
       // Try simple configuration first
       await _speech.listen(
         onResult: _onResult,
-        listenFor: timeout ?? const Duration(seconds: 360),
-        pauseFor: const Duration(seconds: 3),
+        listenFor: timeout,
+        pauseFor: const Duration(seconds: 360),
         listenOptions: stt.SpeechListenOptions(
           partialResults: false, cancelOnError: true, listenMode: stt.ListenMode.dictation
         ),

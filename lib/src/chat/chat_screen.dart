@@ -110,7 +110,7 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       // Start speech recognition only (no audio recording)
       final transcriptFuture = _speechService.startListening(
-        timeout: const Duration(seconds: 360),
+        timeout: const Duration(seconds: 120),
       );
       
       // Show listening UI feedback
