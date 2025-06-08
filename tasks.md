@@ -107,3 +107,4 @@ We are going to adapt ourselves based on that well-known behavior to provide a m
 '''
 When "String? stop()" is called by the user (via the message dialog in chat_screen.dart), it must returns the concatenation of all recognized text. 
 We can know that the system paused the listening (stopped listening on the mic) only when "void _onResult(SpeechRecognitionResult result)" is called with "result.finalResult" set to true.
+Your task is to work in that implementation in file "./lib/src/services/speech_service.dart"

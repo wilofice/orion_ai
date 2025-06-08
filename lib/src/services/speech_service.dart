@@ -93,11 +93,11 @@ class SpeechService {
     _currentTranscript = result.recognizedWords;
     _transcriptController.add(_currentTranscript);
     
-    // if (result.finalResult && _resultCompleter != null && !_resultCompleter!.isCompleted) {
-    //   _resultCompleter!.complete(result.recognizedWords);
-    //   _resultCompleter = null;
-    //   stop();
-    // }
+    if (result.finalResult && _resultCompleter != null && !_resultCompleter!.isCompleted) {
+       _resultCompleter!.complete(result.recognizedWords);
+       _resultCompleter = null;
+       stop();
+     }
   }
 
   /// Starts listening for speech and returns the final transcript
