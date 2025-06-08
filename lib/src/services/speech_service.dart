@@ -89,11 +89,11 @@ class SpeechService {
       await _speech.listen(
         onResult: _onResult,
         listenFor: timeout ?? const Duration(seconds: 30),
-        pauseFor: const Duration(seconds: 3),
-        partialResults: true,
+        pauseFor: const Duration(seconds: 0),
         localeId: null, // Use system default
-        cancelOnError: true,
-        listenMode: stt.ListenMode.dictation,
+        listenOptions: stt.SpeechListenOptions(
+          partialResults: false, cancelOnError: true, listenMode: stt.ListenMode.dictation
+        ),
       );
       
       debugPrint('SpeechService: Started listening');
