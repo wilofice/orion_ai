@@ -126,7 +126,7 @@ class _ChatScreenState extends State<ChatScreen> {
       }
       
       // Start speech recognition in parallel with recording
-      final transcriptFuture = _speechService.startListening(
+      final transcriptFuture = await _speechService.startListening(
         timeout: const Duration(seconds: 30),
       );
       
