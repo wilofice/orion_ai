@@ -84,3 +84,4 @@ The audio file  identifier in S3 (url or id) must be sent in the body when sendi
 After debugging it seems that "final text = await _speechService.listenOnce();" is not doing anything . Sometimes the mobile freezes totally on that line. Or sometimes it just returns null. I am not sure it is the thing to do to call "speechService.listenOnce()". 
 The idea would be better with wait for the recording to end before getting the transcript. But stream implementation of voice recording and transcript can of course bring more performance. Choose wisely what to do here by analysing the "speech_service.dart" file
 
+15) Get my AndroidManisfest.xml file and check if i have required microphone permissions on it in order for the speech recording and recognition to works .
