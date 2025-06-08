@@ -87,3 +87,8 @@ The idea would be better with wait for the recording to end before getting the t
 15) Get my AndroidManisfest.xml file and check if i have required microphone permissions on it in order for the speech recording and recognition to works .
 
 16) In speech_service.dart (lines 88-119), the call to the method '_speech.listen' with its options doesn't work. I always receiving immediately "error_speech_timeout. Analyse the bug , fix it. 
+
+17) In my opinion,   the voice speech implementation in "chat_screen.dart" is not working because we are recording at the same time  while we are using speech_to_text to get the voice transcript.
+We have to make a choice here; We are going to simplify the implementation. Remove the recording of the voice from the implementation. We are going to only use the speech to text service. Don't change anything else. Later we are going to re integrate the audio recording feature. 
+Keep the loading the recording ui feedback (the showDialog function call). The STOP button is still going to be useful for the user to let know that he just finished talking. In that scenario then, we are considering displaying the text transcript in the chat after the user clicked STOP; And the workflow will 
+continue as usual. We are sending the transcript to the api but without an audio URL because we are not going to save anything anymore to aws bucket S3(for the moment).  
