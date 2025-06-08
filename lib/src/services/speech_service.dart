@@ -26,7 +26,7 @@ class SpeechService {
         onStatus: _onStatus,
         onError: _onError,
         debugLogging: kDebugMode,
-        finalTimeout: const Duration(milliseconds: 0), // Disable automatic timeout
+        finalTimeout: const Duration(seconds: 360), // Disable automatic timeout
       );
       
       if (available) {
@@ -93,11 +93,11 @@ class SpeechService {
     _currentTranscript = result.recognizedWords;
     _transcriptController.add(_currentTranscript);
     
-    if (result.finalResult && _resultCompleter != null && !_resultCompleter!.isCompleted) {
-      _resultCompleter!.complete(result.recognizedWords);
-      _resultCompleter = null;
-      stop();
-    }
+    // if (result.finalResult && _resultCompleter != null && !_resultCompleter!.isCompleted) {
+    //   _resultCompleter!.complete(result.recognizedWords);
+    //   _resultCompleter = null;
+    //   stop();
+    // }
   }
 
   /// Starts listening for speech and returns the final transcript
@@ -173,8 +173,8 @@ class SpeechService {
 
   /// Stops listening and returns the current transcript
   String? stop() {
-    if (!_isListening) {
-      debugPrint('SpeechService: Not currently listening');
+    if (_resultCompleter == null || _resultCompleter!.isCompleted) {
+      debugPrint('SpeechService: Not currently listening or already completed');
       return _currentTranscript.isNotEmpty ? _currentTranscript : null;
     }
     
