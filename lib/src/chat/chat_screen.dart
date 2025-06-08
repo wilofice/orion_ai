@@ -1,6 +1,7 @@
 // lib/src/chat/chat_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; // For debugPrint
 import '/src/ui/widgets/chat_message_bubble.dart'; // Adjust path
 import '/src/ui/widgets/message_input_bar.dart'; // Adjust path
 import '/src/chat/chat_provider.dart'; // Adjust path
@@ -106,40 +107,139 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _handleMicPressed() async {
-    await _recorder.startRecording();
-    final text = await _speechService.listenOnce();
-    final recordedPath = await _recorder.stopRecording();
-    if (text == null || text.trim().isEmpty || recordedPath == null) {
-      return;
-    }
-
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final chatProvider = Provider.of<ChatProvider>(context, listen: false);
-    final eventProvider = Provider.of<EventProvider>(context, listen: false);
-
-    if (authProvider.currentUserUuid.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('You must be logged in to send messages.'),
-            backgroundColor: Colors.orange),
+    try {
+      // Initialize the recorder if needed
+      if (!_recorder.isRecording) {
+        await _recorder.initialize();
+      }
+      
+      // Start recording audio first
+      final recordingPath = await _recorder.startRecording();
+      if (recordingPath == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to start recording'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      
+      // Start speech recognition in parallel with recording
+      final transcriptFuture = _speechService.startListening(
+        timeout: const Duration(seconds: 30),
       );
-      return;
-    }
+      
+      // Show recording UI feedback
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                const Text('Listening...'),
+                const SizedBox(height: 16),
+                StreamBuilder<String>(
+                  stream: _speechService.transcriptStream,
+                  builder: (context, snapshot) {
+                    return Text(
+                      snapshot.data ?? '',
+                      style: const TextStyle(fontSize: 12),
+                      textAlign: TextAlign.center,
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Stop'),
+                ),
+              ],
+            ),
+          );
+        },
+      ).then((_) async {
+        // Dialog was closed, stop recording and recognition
+        _speechService.stop();
+        await _recorder.stopRecording();
+      });
+      
+      // Wait for transcription
+      final text = await transcriptFuture;
+      
+      // Stop recording
+      final finalPath = await _recorder.stopRecording();
+      
+      // Close the dialog if still open
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.of(context).pop();
+      }
+      
+      // Check if we got valid results
+      if (text == null || text.trim().isEmpty || finalPath == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No speech detected or recording failed'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
 
-    chatProvider.sendAudioMessage(
-      transcript: text.trim(),
-      audioFile: File(recordedPath),
-      userId: authProvider.currentUserUuid,
-      eventProvider: eventProvider,
-    );
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+      final eventProvider = Provider.of<EventProvider>(context, listen: false);
+
+      if (authProvider.currentUserUuid.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('You must be logged in to send messages.'),
+              backgroundColor: Colors.orange),
+        );
+        return;
+      }
+
+      chatProvider.sendAudioMessage(
+        transcript: text.trim(),
+        audioFile: File(finalPath),
+        userId: authProvider.currentUserUuid,
+        eventProvider: eventProvider,
+      );
+    } catch (e) {
+      debugPrint('Error in _handleMicPressed: $e');
+      
+      // Ensure recording is stopped
+      try {
+        await _recorder.stopRecording();
+        _speechService.cancel();
+      } catch (_) {}
+      
+      // Close dialog if open
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.of(context).pop();
+      }
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Recording failed: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
   void dispose() {
     _textController.dispose();
     _scrollController.dispose();
-    _speechService.stop();
-    _recorder.stopRecording();
+    _speechService.dispose();
+    _recorder.dispose();
     super.dispose();
   }
 
